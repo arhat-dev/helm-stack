@@ -58,8 +58,8 @@ jobs:
 
     - name: Install unzip
       run: |
-        sudo apt update
-        sudo apt install -y unzip
+        apt update
+        apt install -y unzip
 
     - uses: azure/setup-kubectl@v1
       with:

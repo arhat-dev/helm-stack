@@ -31,25 +31,25 @@ vendor:
 include scripts/test/unit.mk
 
 # binary build
-include scripts/build/template-application-go.mk
+include scripts/build/helm-stack.mk
 
 # image
-include scripts/image/template-application-go.mk
+include scripts/image/helm-stack.mk
 
 image.build.linux.all: \
-	image.build.template-application-go.linux.all
+	image.build.helm-stack.linux.all
 
 image.build.windows.all: \
-	image.build.template-application-go.windows.all
+	image.build.helm-stack.windows.all
 
 image.push.linux.all: \
-	image.push.template-application-go.linux.all
+	image.push.helm-stack.linux.all
 
 image.push.windows.all: \
-	image.push.template-application-go.windows.all
+	image.push.helm-stack.windows.all
 
 # packaging
-include scripts/package/template-application-go.mk
+include scripts/package/helm-stack.mk
 
 # optional private scripts
 -include private/scripts.mk

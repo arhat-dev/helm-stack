@@ -17,3 +17,10 @@ test.pkg:
 
 test.cmd:
 	sh scripts/test/unit.sh cmd
+
+	rm -rf build
+	$(MAKE) helm-stack
+	mv build/helm-stack* build/helm-stack
+	./build/helm-stack ensure --force-pull
+	./build/helm-stack gen all
+	./build/helm-stack clean -y

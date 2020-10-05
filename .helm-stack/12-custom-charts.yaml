@@ -1,0 +1,13 @@
+charts:
+- name: foo@latest
+  local: {}
+
+- name: elasticsearch@7.8.0
+  git:
+    url: https://github.com/elastic/helm-charts.git
+    path: elasticsearch
+
+- name: logstash@7.8.0
+  git:
+    url: https://github.com/elastic/helm-charts.git
+    path: logstash

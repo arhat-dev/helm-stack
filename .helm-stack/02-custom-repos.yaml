@@ -1,0 +1,12 @@
+repos:
+- name: custom
+  url: https://charts.example.com
+  auth:
+    httpBasic:
+      username: foo
+      password: bar
+  tls:
+    insecureSkipVerify: true
+    caCert: /path/to/ca.crt
+    cert: /path/to/cert.pem
+    key: /path/to/key.pem

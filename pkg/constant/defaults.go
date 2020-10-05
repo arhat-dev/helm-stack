@@ -17,5 +17,13 @@ limitations under the License.
 package constant
 
 const (
-	DefaultTemplateApplicationGoConfigFile = "/etc/template-application-go/config.yaml"
+	DefaultHelmStackConfigFile = ".helm-stack.yaml"
+	DefaultHelmStackConfigDir  = ".helm-stack"
+
+	DefaultEnvironmentsDir = "envs"
+	DefaultChartsDir       = "charts"
+)
+
+const (
+	DefaultValuesFile = "values.yaml"
 )

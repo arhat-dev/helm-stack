@@ -1,0 +1,15 @@
+environments:
+- name: foo
+  # set kubeconfig context if it's not the default context
+  kubeContext: ""
+  deployments:
+  - name: storage/redis # <namespace>/<name>
+    chart: bitnami/redis@latest
+    state: absent
+    baseValues: values-production.yaml
+
+  - name: storage/postgres
+    chart: postgres-operator@master
+
+  - name: storage/es
+    chart: elasticsearch@7.8.0

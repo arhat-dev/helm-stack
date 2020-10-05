@@ -62,10 +62,13 @@ jobs:
       run: |
         make test.pkg
 
+    - name: Install unzip
+      run: |
+        sudo apt install -y unzip
+
     - uses: azure/setup-kubectl@v1
       with:
         version: latest
-
     - uses: azure/setup-helm@v1
       with:
         version: latest

@@ -1,4 +1,4 @@
-# Template Application Go
+# helm-stack
 
 [![CI](https://github.com/arhat-dev/helm-stack/workflows/CI/badge.svg)](https://github.com/arhat-dev/helm-stack/actions?query=workflow%3ACI)
 [![Build](https://github.com/arhat-dev/helm-stack/workflows/Build/badge.svg)](https://github.com/arhat-dev/helm-stack/actions?query=workflow%3ABuild)
@@ -6,19 +6,29 @@
 [![GoReportCard](https://goreportcard.com/badge/arhat.dev/helm-stack)](https://goreportcard.com/report/arhat.dev/helm-stack)
 [![codecov](https://codecov.io/gh/arhat-dev/helm-stack/branch/master/graph/badge.svg)](https://codecov.io/gh/arhat-dev/helm-stack)
 
-Template repo for applications written in Go
+Stack your cluster deployments the easy way
 
-## Make Targets
+## Build
 
-- binary build: `<comp>.{OS}.{ARCH}`
-- image build: `image.build.<comp>.{OS}.{ARCH}`
-- image push: `image.push.<comp>.{OS}.{ARCH}`
-- unit tests: `test.pkg`, `test.cmd`
-- packaging:
-  - linux deb: `package.<comp>.deb.{ARCH}`
-  - linux rpm: `package.<comp>.rpm.{ARCH}`
-  - windows msi: `package.<comp>.msi.{ARCH}`
-  - darwin pkg: `package.<comp>.pkg.{ARCH}`
+```bash
+make helm-stack
+```
+
+## Config
+
+- For file based config: Please refer to [`config.sample.yaml`](./config.sample.yaml) for example
+- For directory based config: Please refer to [`.helm-stack`](./.helm-stack) for example
+
+## Workflow
+
+1. Define your charts and deployment environments in a yaml/json config file or using multiple yaml/json config files (in the same parent directory)
+2. Run `helm-stack ensure` to ensure charts and values files
+3. Update yaml values files in `<environments-dir>/<environment-name>` according to your deployments requirements
+4. After several updates, there may be some charts unused, you can remove these charts and related values file with `helm-stack clean`
+5. Run `helm-stack gen` to generate kubernetes manifests
+6. Run `helm-stack apply` to deploy manifests to your environment
+
+Please refer to [`.helm-stack`](./.helm-stack/) for config structure
 
 ## LICENSE
 

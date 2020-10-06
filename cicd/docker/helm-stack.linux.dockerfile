@@ -4,9 +4,11 @@ FROM arhatdev/builder-go:alpine as builder
 
 ARG ARCH=amd64
 
+RUN KUBE_ARCH="$(basename ${ARCH} v7)"; if [ "${KUBE_ARCH}" = "x86" ]; then KUBE_ARCH="386" fi ;\
+    export KUBE_ARCH
+
 # Add kubctl v1.16,v1.17,v1.18,v1.19
-RUN export KUBE_ARCH="$(basename ${ARCH} v7)" &&\
-    mkdir -p /opt/kube/v1.16 &&\
+RUN mkdir -p /opt/kube/v1.16 &&\
     curl -o /opt/kube/v1.16/kubectl -SsL "https://storage.googleapis.com/kubernetes-release/release/v1.16.15/bin/linux/${KUBE_ARCH}/kubectl" &&\
     chmod +x /opt/kube/v1.16/kubectl &&\
     mkdir -p /opt/kube/v1.17 &&\
@@ -20,8 +22,7 @@ RUN export KUBE_ARCH="$(basename ${ARCH} v7)" &&\
     chmod +x /opt/kube/v1.19/kubectl
 
 # Add helm v2,v3
-RUN export KUBE_ARCH="$(basename ${ARCH} v7)" &&\
-    mkdir -p /tmp/helm /opt/helm/v2 &&\
+RUN mkdir -p /tmp/helm /opt/helm/v2 &&\
     curl -SsL "https://get.helm.sh/helm-v2.16.12-linux-${KUBE_ARCH}.tar.gz" | tar -C /tmp/helm -zxf - &&\
     mv "/tmp/helm/linux-${KUBE_ARCH}/helm" /opt/helm/v2/helm &&\
     rm -rf /tmp/helm &&\

@@ -4,7 +4,7 @@ FROM arhatdev/builder-go:alpine as builder
 
 ARG ARCH=amd64
 
-RUN KUBE_ARCH="$(basename ${ARCH} v7)"; if [ "${KUBE_ARCH}" = "x86" ]; then KUBE_ARCH="386" fi ;\
+RUN KUBE_ARCH="$(basename ${ARCH} v7)"; if [ "${KUBE_ARCH}" = "x86" ]; then KUBE_ARCH="386"; fi ;\
     export KUBE_ARCH
 
 # Add kubctl v1.16,v1.17,v1.18,v1.19

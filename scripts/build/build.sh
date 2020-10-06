@@ -32,7 +32,7 @@ _build() {
 
 helm_stack() {
   # TODO: set mandatory tags and predefined tags for specific platforms
-  _build "${GOBUILD} -tags='nokube nocloud netgo ${PREDEFINED_BUILD_TAGS} ${TAGS}' ./cmd/helm-stack"
+  _build "CGO_ENABLED=0 ${GOBUILD} -tags='nokube nocloud netgo ${PREDEFINED_BUILD_TAGS} ${TAGS}' ./cmd/helm-stack"
 }
 
 COMP=$(printf "%s" "$@" | cut -d. -f1)

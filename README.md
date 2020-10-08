@@ -16,10 +16,14 @@ make helm-stack
 
 ## Config
 
-- For file based config: Please refer to [`config.sample.yaml`](./config.sample.yaml) for example
+- For file based config: Please refer to [`.helm-stack.yaml`](./.helm-stack.yaml) for example
 - For directory based config: Please refer to [`.helm-stack`](./.helm-stack) for example
 
+**NOTE:** helm-stack will try to find default configurations in `.helm-stack` and `helm-stack.yaml`, please make sure there are no duplicate items in these two locations
+
 ## Workflow
+
+TL;DR: you can run `make test.cmd` to take a walkthrough of the workflow
 
 1. Define your charts and deployment environments in a yaml/json config file or using multiple yaml/json config files (in the same parent directory)
 2. Run `helm-stack ensure` to ensure charts and values files

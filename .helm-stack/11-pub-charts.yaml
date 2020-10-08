@@ -1,16 +1,6 @@
 charts:
-- name: bitnami/redis@latest
-
+- name: oteemo/sonatype-nexus@2.3.0
 - name: postgres-operator@master
   git:
     url: https://github.com/zalando/postgres-operator
     path: charts/postgres-operator
-
-- name: emqx@master
-  git:
-    url: https://github.com/emqx/emqx-rel
-    path: deploy/charts/emqx
-
-- name: oteemo/sonatype-nexus@2.3.0
-
-- name: bitnami/prometheus-operator@0.20.7

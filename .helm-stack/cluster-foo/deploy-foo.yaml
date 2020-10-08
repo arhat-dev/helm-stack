@@ -3,11 +3,6 @@ environments:
   # set kubeconfig context if it's not the default context
   kubeContext: ""
   deployments:
-  - name: storage/redis # <namespace>/<name>
-    chart: bitnami/redis@latest
-    state: absent
-    baseValues: values-production.yaml
-
   - name: storage/postgres
     chart: postgres-operator@master
 

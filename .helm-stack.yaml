@@ -1,0 +1,54 @@
+app:
+  environmentsDir: ./build/envs
+  chartsDir: ./build/charts
+
+repos:
+- name: incubator
+  url: https://kubernetes-charts-incubator.storage.googleapis.com
+- name: bitnami
+  url: https://charts.bitnami.com/bitnami
+- name: custom-foo
+  url: https://charts.example.com
+  auth:
+    httpBasic:
+      username: foo
+      password: bar
+  tls:
+    insecureSkipVerify: true
+    caCert: /path/to/ca.crt
+    cert: /path/to/cert.pem
+    key: /path/to/key.pem
+
+charts:
+- name: bitnami/redis@latest
+- name: bitnami/prometheus-operator@0.20.7
+- name: emqx@master
+  git:
+    url: https://github.com/emqx/emqx-rel
+    path: deploy/charts/emqx
+- name: logstash@7.8.0
+  git:
+    url: https://github.com/elastic/helm-charts.git
+    path: logstash
+
+environments:
+- name: bar
+  # set kubeconfig context if it's not the default context
+  kubeContext: ""
+  deployments:
+  - name: edge/mqtt
+    chart: emqx@master
+
+  - name: storage/redis # <namespace>/<name>
+    chart: bitnami/redis@latest
+    state: absent
+    baseValues: values-production.yaml
+
+  - name: monitoring/promop
+    chart: bitnami/prometheus-operator@0.20.7
+    baseValues: values-production.yaml
+    state: absent,keepCRDs
+
+  # - name: logging/logstash
+  #   chart: logstash@7.8.0
+

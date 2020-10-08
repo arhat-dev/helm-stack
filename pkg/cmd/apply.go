@@ -22,7 +22,7 @@ func NewApplyCommand(appCtx *context.Context) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:           "apply [options] <environment name>",
+		Use:           "apply <environment name>",
 		Short:         "run kubectl apply with generated manifests",
 		SilenceErrors: true,
 		SilenceUsage:  true,

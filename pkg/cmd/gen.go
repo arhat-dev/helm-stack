@@ -13,7 +13,7 @@ import (
 
 func NewGenCommand(appCtx *context.Context) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "gen [options] <environment name 1> ... <environment name N>",
+		Use:           "gen <environment name 1> ... <environment name N>",
 		Short:         "generate manifests according to your custom values",
 		SilenceErrors: true,
 		SilenceUsage:  true,

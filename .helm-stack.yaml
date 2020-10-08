@@ -51,4 +51,3 @@ environments:
 
   # - name: logging/logstash
   #   chart: logstash@7.8.0
-

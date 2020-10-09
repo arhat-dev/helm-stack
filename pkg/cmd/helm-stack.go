@@ -150,6 +150,12 @@ func readConfigAndResolve(configFileOrDir string, rc *conf.ResolvedConfig) error
 			return nil
 		}
 
+		switch filepath.Ext(info.Name()) {
+		case ".yaml", ".yml", ".json":
+		default:
+			return nil
+		}
+
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("failed to read file %q: %w", path, err)

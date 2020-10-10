@@ -37,5 +37,8 @@ ARG APP=helm-stack
 
 COPY --from=builder /opt /opt
 
+# add git for in repo chart downlaod
+RUN apk add --no-cache git
+
 ENTRYPOINT [ "sh", "-c" ]
 CMD [ "/helm-stack" ]

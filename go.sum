@@ -1,5 +1,3 @@
-arhat.dev/pkg v0.0.0-20200930092909-aa3af7acc29c h1:Tr5Yg/ka46kyPPvqFp+DUywEEP2WpT0TlDjlFO5EmVA=
-arhat.dev/pkg v0.0.0-20200930092909-aa3af7acc29c/go.mod h1:a5qmenmejj79BYY2Xe8RaHwJA/HChEYWuzbqdmqnYc4=
 arhat.dev/pkg v0.0.0-20201011023427-3d85bac95f31 h1:tVhAUtXhp4U8mCgHIrlMbW29QgnuJEJoM/HCqiJsJQg=
 arhat.dev/pkg v0.0.0-20201011023427-3d85bac95f31/go.mod h1:a5qmenmejj79BYY2Xe8RaHwJA/HChEYWuzbqdmqnYc4=
 bitbucket.org/bertimus9/systemstat v0.0.0-20180207000608-0eeff89b0690/go.mod h1:Ulb78X89vxKYgdL24HMTiXYHlyHEvruOj1ZPlqeNEZM=

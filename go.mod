@@ -32,7 +32,7 @@ replace (
 )
 
 require (
-	arhat.dev/pkg v0.0.0-20200930092909-aa3af7acc29c
+	arhat.dev/pkg v0.0.0-20201011023427-3d85bac95f31
 	github.com/rogpeppe/go-internal v1.3.0
 	github.com/spf13/cobra v1.0.0
 	go.uber.org/multierr v1.5.0

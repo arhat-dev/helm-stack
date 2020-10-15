@@ -415,13 +415,13 @@ func (c DeploymentSpec) Filename(subChart string) string {
 	)
 
 	if subChart != "" {
-		name = name + "." + subChart
+		subChart = "_" + subChart
 	}
 	if repoName == "" {
-		return fmt.Sprintf("%s_%s.%s_%s.yaml", chartName, chartVersion, namespace, name)
+		return fmt.Sprintf("%s.%s[%s@%s].yaml", namespace, name, chartName+subChart, chartVersion)
 	}
 
-	return fmt.Sprintf("%s_%s_%s.%s_%s.yaml", repoName, chartName, chartVersion, namespace, name)
+	return fmt.Sprintf("%s.%s[%s.%s@%s].yaml", namespace, name, repoName, chartName+subChart, chartVersion)
 }
 
 func (c DeploymentSpec) NamespaceAndName() (namespace, name string) {

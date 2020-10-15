@@ -1,4 +1,4 @@
-# arhat.dev/pkg v0.0.0-20200930092909-aa3af7acc29c
+# arhat.dev/pkg v0.0.0-20201011023427-3d85bac95f31
 ## explicit
 arhat.dev/pkg/confhelper
 arhat.dev/pkg/envhelper

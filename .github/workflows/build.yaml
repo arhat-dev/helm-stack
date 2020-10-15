@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
     - master
+    - "!deps/**"
   push:
     branches:
     - master
@@ -24,6 +25,7 @@ defaults:
 
 jobs:
   build-on-linux:
+    if: contains(github.head_ref, 'deps/') == false
     runs-on: ubuntu-latest
     steps:
     - uses: kolpav/purge-artifacts-action@v1
@@ -70,6 +72,7 @@ jobs:
         path: build
 
   build-on-darwin:
+    if: contains(github.head_ref, 'deps/') == false
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -106,6 +109,7 @@ jobs:
         path: build
 
   build-on-windows:
+    if: contains(github.head_ref, 'deps/') == false
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2

@@ -14,12 +14,22 @@ Stack your cluster deployments the easy way
 make helm-stack
 ```
 
+## Install
+
+Install helm-stack to `${GOPATH}/bin/helm-stack`
+
+```bash
+GOOS=$(go env GOHOSTOS) GOARCH=$(go env GOHOSTARCH) go install ./cmd/helm-stack
+```
+
 ## Config
+
+All configration files provided to helm-stack will be merged, please make sure there are no duplicate items in your configuration files
 
 - For file based config: Please refer to [`.helm-stack.yaml`](./.helm-stack.yaml) for example
 - For directory based config: Please refer to [`.helm-stack`](./.helm-stack) for example
 
-**NOTE:** helm-stack will try to find default configurations in `.helm-stack` and `helm-stack.yaml`, please make sure there are no duplicate items in these two locations
+**NOTE:** helm-stack by default will try to read configuration files in `.helm-stack` and `helm-stack.yaml`, but if you have provided any `-c` or `--config` flag, helm-stack will not use these default config files.
 
 ## Workflow
 

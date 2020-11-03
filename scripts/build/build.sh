@@ -40,13 +40,15 @@ CMD=$(printf "%s" "$@" | tr '-' '_' | tr '.'  ' ')
 
 # CMD format: {comp} {os} {arch}
 
-GOOS="$(printf "%s" "$@" | cut -d. -f2 || true)"
+OS="$(printf "%s" "$@" | cut -d. -f2 || true)"
 ARCH="$(printf "%s" "$@" | cut -d. -f3 || true)"
 
-if [ -z "${GOOS}" ] || [ "${GOOS}" = "$(printf "%s" "${COMP}")" ]; then
+if [ -z "${OS}" ] || [ "${OS}" = "${COMP}" ]; then
   # fallback to goos and goarch values
   GOOS="$(go env GOHOSTOS)"
   ARCH="$(go env GOHOSTARCH)"
+else
+  GOOS="${OS}"
 fi
 
 GOEXE=""

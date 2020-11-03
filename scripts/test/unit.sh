@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-common_go_test_env="GOOS=$(go env GOHOSTOS) GOARCH=$(go env GOHOSTARCH)"
+common_go_test_env="PROJECT_DIR=$(pwd) GOOS=$(go env GOHOSTOS) GOARCH=$(go env GOHOSTARCH)"
 common_go_test_flags="-mod=vendor -v -failfast -covermode=atomic"
 
 pkg() {
@@ -25,7 +25,7 @@ pkg() {
 }
 
 cmd() {
-    go_test="${common_go_test_env} CGO_ENABLED=0 go test ${common_go_test_flags} -coverprofile=coverage.cmd.txt -coverpkg=./cmd/... ./cmd/..."
+    go_test="${common_go_test_env} CGO_ENABLED=0 go test ${common_go_test_flags} -coverprofile=coverage.cmd.txt -coverpkg=./pkg/... ./cmd/..."
 
     set -ex
     eval "${go_test}"

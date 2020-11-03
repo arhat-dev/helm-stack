@@ -15,9 +15,5 @@
 test.pkg:
 	sh scripts/test/unit.sh pkg
 
-test.cmd: helm-stack
+test.cmd:
 	sh scripts/test/unit.sh cmd
-
-	./build/helm-stack ensure --force-pull
-	./build/helm-stack gen all
-	./build/helm-stack clean -y

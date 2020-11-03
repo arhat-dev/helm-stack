@@ -1,0 +1,10 @@
+environments:
+- name: foo
+  # set kubeconfig context if it's not the default context
+  kubeContext: ""
+  deployments:
+  - name: monitoring/foo
+    chart: postgres-operator@master
+
+  - name: monitoring/bar
+    chart: elasticsearch@7.8.0

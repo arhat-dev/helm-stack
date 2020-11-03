@@ -197,7 +197,8 @@ func (c ChartSpec) Ensure(
 				}
 
 				_, rmErr := exechelper.Do(exechelper.Spec{
-					Context: ctx,
+					// do not use real context since we want to remove it at best effort
+					Context: context.TODO(),
 					Command: []string{"helm", "repo", "remove", fakeRepoName},
 					Stdout:  os.Stdout,
 					Stderr:  os.Stdout,

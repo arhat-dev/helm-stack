@@ -83,7 +83,15 @@ jobs:
       with:
         version: latest
 
+    - name: Test Commands on windows
+      if: matrix.os == 'windows-latest'
+      continue-on-error: true
+      run: |
+        make test.cmd
+
     - name: Test Commands
+      if: matrix.os != 'windows-latest'
+      continue-on-error: false
       run: |
         make test.cmd
 

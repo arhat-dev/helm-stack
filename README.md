@@ -8,6 +8,28 @@
 
 Stack your cluster deployments the easy way
 
+## Config
+
+All configration files provided to helm-stack will be merged, please make sure there are no duplicate items in your configuration files
+
+- For file based config: Please refer to [`.helm-stack.yaml`](./.helm-stack.yaml) for example
+- For directory based config: Please refer to [`.helm-stack`](./.helm-stack) for example
+
+**NOTE:** helm-stack by default will try to read configuration files in `.helm-stack` and `helm-stack.yaml`, but if you have provided any `-c` or `--config` flag, helm-stack will not use these default config files.
+
+## Workflow
+
+__TL;DR:__ [`template-kubernetes-cluster`](https://github.com/arhat-dev/template-kubernetes-cluster) contains a complete cluster management workflow
+
+1. Define your charts and deployment environments in a yaml/json config file or using multiple yaml/json config files (in the same parent directory)
+2. Run `helm-stack ensure` to ensure charts and values files
+3. Update yaml values files in `<environments-dir>/<environment-name>` according to your deployments requirements
+4. After several updates, there may be some charts unused, you can remove these charts and related values file with `helm-stack clean`
+5. Run `helm-stack gen` to generate kubernetes manifests
+6. Run `helm-stack apply` to deploy manifests to your environment
+
+Please refer to [`.helm-stack`](./.helm-stack/) for config structure
+
 ## Build
 
 ```bash
@@ -21,28 +43,6 @@ Install helm-stack to `${GOPATH}/bin/helm-stack`
 ```bash
 GOOS=$(go env GOHOSTOS) GOARCH=$(go env GOHOSTARCH) go install ./cmd/helm-stack
 ```
-
-## Config
-
-All configration files provided to helm-stack will be merged, please make sure there are no duplicate items in your configuration files
-
-- For file based config: Please refer to [`.helm-stack.yaml`](./.helm-stack.yaml) for example
-- For directory based config: Please refer to [`.helm-stack`](./.helm-stack) for example
-
-**NOTE:** helm-stack by default will try to read configuration files in `.helm-stack` and `helm-stack.yaml`, but if you have provided any `-c` or `--config` flag, helm-stack will not use these default config files.
-
-## Workflow
-
-TL;DR: you can run `make test.cmd` to take a walkthrough of the workflow
-
-1. Define your charts and deployment environments in a yaml/json config file or using multiple yaml/json config files (in the same parent directory)
-2. Run `helm-stack ensure` to ensure charts and values files
-3. Update yaml values files in `<environments-dir>/<environment-name>` according to your deployments requirements
-4. After several updates, there may be some charts unused, you can remove these charts and related values file with `helm-stack clean`
-5. Run `helm-stack gen` to generate kubernetes manifests
-6. Run `helm-stack apply` to deploy manifests to your environment
-
-Please refer to [`.helm-stack`](./.helm-stack/) for config structure
 
 ## LICENSE
 

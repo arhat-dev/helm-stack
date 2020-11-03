@@ -1,0 +1,6 @@
+apiVersion: v2
+name: bar
+description: bar chart without any values
+type: application
+version: 0.1.0
+appVersion: latest

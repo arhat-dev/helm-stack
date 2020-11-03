@@ -1,0 +1,32 @@
+---
+# Source: foo/charts/bar/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bar
+data:
+  bar: bar
+---
+# Source: foo/charts/foo/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sub-foo
+data:
+  foo: sub chart foo
+---
+# Source: foo/charts/foobar/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foobar
+data:
+  foobar: bar
+---
+# Source: foo/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo
+data:
+  foo: bar

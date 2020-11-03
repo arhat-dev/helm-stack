@@ -1,0 +1,10 @@
+dependencies:
+- name: foo
+  version: 0.1.0
+  condition: foo.enabled
+- name: bar
+  version: 0.1.0
+  condition: bar.enabled
+- name: foobar
+  version: 0.1.0
+  condition: foobar.enabled

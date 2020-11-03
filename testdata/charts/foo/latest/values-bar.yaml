@@ -1,0 +1,11 @@
+myself: bar
+
+bar:
+  enabled: true
+
+foo:
+  enabled: true
+  foo: override
+
+foobar:
+  enabled: true

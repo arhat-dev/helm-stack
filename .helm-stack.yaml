@@ -1,6 +1,7 @@
 app:
   environmentsDir: ./build/envs
   chartsDir: ./build/charts
+  localChartsDir: ./testdata/charts
 
 repos:
 - name: incubator
@@ -48,6 +49,10 @@ environments:
     chart: bitnami/prometheus-operator@0.20.7
     baseValues: values-production.yaml
     state: absent,keepCRDs
+  
+  - name: testing/foo
+    chart: foo@latest
+    baseValues: values-bar.yaml
 
   # - name: logging/logstash
   #   chart: logstash@7.8.0

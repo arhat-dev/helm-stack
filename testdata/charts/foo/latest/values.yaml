@@ -1,0 +1,10 @@
+myself: foo
+
+bar:
+  enabled: false
+
+foo:
+  enabled: true
+
+foobar:
+  enabled: true

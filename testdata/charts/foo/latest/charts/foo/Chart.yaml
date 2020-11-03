@@ -1,0 +1,6 @@
+apiVersion: v2
+name: foo
+description: foo sub chart to test values override
+type: application
+version: 0.1.0
+appVersion: latest

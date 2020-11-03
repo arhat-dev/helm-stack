@@ -1,3 +1,4 @@
 app:
   environmentsDir: ./build/envs
   chartsDir: ./build/charts
+  localChartsDir: ./testdata/charts

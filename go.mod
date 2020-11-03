@@ -35,6 +35,7 @@ require (
 	arhat.dev/pkg v0.1.1
 	github.com/rogpeppe/go-internal v1.6.2
 	github.com/spf13/cobra v1.1.1
+	github.com/stretchr/testify v1.6.1
 	go.uber.org/multierr v1.6.0
 	k8s.io/apimachinery v0.18.10
 	k8s.io/kubectl v0.18.10

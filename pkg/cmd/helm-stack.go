@@ -189,10 +189,19 @@ func readConfigAndResolve(configFileOrDir string, rc *conf.ResolvedConfig) error
 		}
 
 		for i, e := range config.Environments {
-			if _, exists := rc.Environments[e.Name]; exists {
-				return fmt.Errorf("duplicate environment name %q", e.Name)
+			if existingEnv, exists := rc.Environments[e.Name]; exists {
+				if existingEnv.KubeContext != e.KubeContext {
+					return fmt.Errorf("environment %q configured with multiple kubeContext", e.Name)
+				}
+
+				// merge environment deployments
+				rc.Environments[e.Name].Deployments = append(
+					rc.Environments[e.Name].Deployments,
+					config.Environments[i].Deployments...,
+				)
+			} else {
+				rc.Environments[e.Name] = &config.Environments[i]
 			}
-			rc.Environments[e.Name] = &config.Environments[i]
 		}
 
 		rc.App = rc.App.Override(&config.App)

@@ -45,11 +45,16 @@ func (e Environment) CustomManifestsDir(envDir string, dep *DeploymentSpec) stri
 func (e Environment) Validate(charts map[string]*ChartSpec) error {
 	var err error
 	if e.Name == "" {
-		err = multierr.Combine(err, fmt.Errorf("invalid empty deployment environment name"))
+		err = multierr.Append(err, fmt.Errorf("invalid empty deployment environment name"))
 	}
 
+	names := make(map[string]struct{})
 	for _, d := range e.Deployments {
-		err = multierr.Combine(err, d.Validate(charts))
+		if _, defined := names[d.Name]; defined {
+			multierr.Append(err, fmt.Errorf("duplicate deployment item %q", d.Name))
+		}
+
+		err = multierr.Append(err, d.Validate(charts))
 	}
 
 	return nil
@@ -472,16 +477,16 @@ func (c DeploymentSpec) NamespaceAndName() (namespace, name string) {
 func (c DeploymentSpec) Validate(charts map[string]*ChartSpec) error {
 	var err error
 	if !strings.Contains(c.Name, "/") {
-		err = multierr.Combine(err, fmt.Errorf("invalid deployment name without namespace"))
+		err = multierr.Append(err, fmt.Errorf("invalid deployment name without namespace"))
 	}
 
 	if c.Chart == "" {
-		err = multierr.Combine(err, fmt.Errorf("invalid empty chart name for deployment"))
+		err = multierr.Append(err, fmt.Errorf("invalid empty chart name for deployment"))
 	} else if _, ok := charts[c.Chart]; !ok {
-		err = multierr.Combine(err, fmt.Errorf("deployment chart %q not listed", c.Chart))
+		err = multierr.Append(err, fmt.Errorf("deployment chart %q not listed", c.Chart))
 	}
 
-	return multierr.Combine(err, c.GetState().Validate())
+	return multierr.Append(err, c.GetState().Validate())
 }
 
 func (c DeploymentSpec) GetState() DeploymentState {
@@ -521,7 +526,7 @@ type DeploymentState struct {
 func (s DeploymentState) Validate() error {
 	var err error
 	if s.UnknownStates != "" {
-		err = multierr.Combine(err, fmt.Errorf("coantains unknown states %q", s.UnknownStates))
+		err = multierr.Append(err, fmt.Errorf("coantains unknown states %q", s.UnknownStates))
 	}
 
 	return err

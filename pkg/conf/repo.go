@@ -24,22 +24,22 @@ type RepoSpec struct {
 func (r RepoSpec) Validate() error {
 	var err error
 	if r.Name == "" {
-		err = multierr.Combine(err, fmt.Errorf("invalid helm repo with empty name"))
+		err = multierr.Append(err, fmt.Errorf("invalid helm repo with empty name"))
 	}
 
 	if r.URL == "" {
-		err = multierr.Combine(err, fmt.Errorf("invalid helm repo with no url"))
+		err = multierr.Append(err, fmt.Errorf("invalid helm repo with no url"))
 	} else {
 		var u *url.URL
 		u, err = url.Parse(r.URL)
 		if err != nil {
-			err = multierr.Combine(err, fmt.Errorf("invalid repo url %q: %w", r.URL, err))
+			err = multierr.Append(err, fmt.Errorf("invalid repo url %q: %w", r.URL, err))
 		}
 
 		switch u.Scheme {
 		case "http", "https":
 		default:
-			err = multierr.Combine(err, fmt.Errorf("invalid url scheme %q, only http/https supported", u.Scheme))
+			err = multierr.Append(err, fmt.Errorf("invalid url scheme %q, only http/https supported", u.Scheme))
 		}
 	}
 

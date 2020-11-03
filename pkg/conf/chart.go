@@ -64,24 +64,24 @@ func (c ChartSpec) Dir(chartsDir string, subChartName string) string {
 func (c ChartSpec) Validate(repos map[string]*RepoSpec) error {
 	var err error
 	if !strings.Contains(c.Name, "@") {
-		err = multierr.Combine(err, fmt.Errorf("chart name must inclue version info"))
+		err = multierr.Append(err, fmt.Errorf("chart name must inclue version info"))
 	}
 
 	if c.ChartSource == nil || (c.ChartSource.Git == nil && c.ChartSource.Local == nil) {
 		if !strings.Contains(c.Name, "/") {
-			err = multierr.Combine(err, fmt.Errorf("invalid chart without repo or custom source"))
+			err = multierr.Append(err, fmt.Errorf("invalid chart without repo or custom source"))
 		} else {
 			parts := strings.SplitN(c.Name, "/", 2)
 			if _, ok := repos[parts[0]]; !ok {
-				err = multierr.Combine(err, fmt.Errorf("repo %q for chart %q not found", parts[0], c.Name))
+				err = multierr.Append(err, fmt.Errorf("repo %q for chart %q not found", parts[0], c.Name))
 			}
 		}
 	} else {
 		switch {
 		case c.ChartSource.Git != nil:
-			err = multierr.Combine(err, c.ChartSource.Git.Validate())
+			err = multierr.Append(err, c.ChartSource.Git.Validate())
 		case c.ChartSource.Local != nil:
-			err = multierr.Combine(err, c.ChartSource.Local.Validate())
+			err = multierr.Append(err, c.ChartSource.Local.Validate())
 		}
 	}
 
@@ -339,7 +339,7 @@ func (g *ChartFromGitRepo) Validate() error {
 	// switch u.Scheme {
 	// case "git", "https", "http":
 	// default:
-	// 	err = multierr.Combine(err, fmt.Errorf("unsupported git scheme %q, only git/http/https allowed", u.Scheme))
+	// 	err = multierr.Append(err, fmt.Errorf("unsupported git scheme %q, only git/http/https allowed", u.Scheme))
 	// }
 
 	return err

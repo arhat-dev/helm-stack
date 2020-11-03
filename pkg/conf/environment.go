@@ -60,7 +60,11 @@ func (e Environment) Validate(charts map[string]*ChartSpec) error {
 	return nil
 }
 
-func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, charts map[string]*ChartSpec) error {
+func (e Environment) Ensure(
+	ctx context.Context,
+	chartsDir, localChartsDir, envDir string,
+	charts map[string]*ChartSpec,
+) error {
 	_ = ctx
 	valuesDir := e.ValuesDir(envDir)
 
@@ -75,7 +79,7 @@ func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, chart
 			return fmt.Errorf("chart %s not found", d.Chart)
 		}
 
-		subChartNames, err := chart.SubChartNames(chartsDir)
+		subChartNames, err := chart.SubChartNames(chartsDir, localChartsDir)
 		if err != nil {
 			return fmt.Errorf("failed to check sub charts")
 		}
@@ -104,7 +108,7 @@ func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, chart
 				baseValuesFile = constant.DefaultValuesFile
 			}
 
-			srcValuesFile := filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile)
+			srcValuesFile := filepath.Join(chart.Dir(chartsDir, localChartsDir, subChartName), baseValuesFile)
 			if err = iohelper.CopyFile(srcValuesFile, destValuesFile); err == nil {
 				continue
 			}
@@ -112,12 +116,12 @@ func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, chart
 			if subChartName != "" {
 				// this is a sub chart, may not contain target values file
 				subChartValuesFiles := []string{
-					filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile),
+					filepath.Join(chart.Dir(chartsDir, localChartsDir, subChartName), baseValuesFile),
 				}
 				if baseValuesFile != constant.DefaultValuesFile {
 					// fallback to values.yaml
 					subChartValuesFiles = append(subChartValuesFiles,
-						filepath.Join(chart.Dir(chartsDir, subChartName), constant.DefaultValuesFile),
+						filepath.Join(chart.Dir(chartsDir, localChartsDir, subChartName), constant.DefaultValuesFile),
 					)
 				}
 				for _, srcValuesFile := range subChartValuesFiles {
@@ -139,7 +143,11 @@ func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, chart
 }
 
 // nolint:gocyclo
-func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts map[string]*ChartSpec) error {
+func (e Environment) Gen(
+	ctx context.Context,
+	chartsDir, localChartsDir, envDir string,
+	charts map[string]*ChartSpec,
+) error {
 	manifestsDir := e.ManifestsDir(envDir)
 
 	_ = os.RemoveAll(manifestsDir)
@@ -155,7 +163,7 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 			return fmt.Errorf("chart %s not found", d.Chart)
 		}
 
-		subChartNames, err := chart.SubChartNames(chartsDir)
+		subChartNames, err := chart.SubChartNames(chartsDir, localChartsDir)
 		if err != nil {
 			return fmt.Errorf("failed to check sub charts")
 		}
@@ -172,7 +180,7 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 
 		cmd := []string{
 			"helm", "template", "--namespace", namespace, "--debug",
-			"--values", filepath.Join(chart.Dir(chartsDir, ""), baseValuesFile),
+			"--values", filepath.Join(chart.Dir(chartsDir, localChartsDir, ""), baseValuesFile),
 			"--set", "fullnameOverride=" + name,
 		}
 
@@ -183,9 +191,9 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 			} else {
 				cmd = append(cmd, "--include-crds")
 			}
-			cmd = append(cmd, name, chart.Dir(chartsDir, ""))
+			cmd = append(cmd, name, chart.Dir(chartsDir, localChartsDir, ""))
 		} else {
-			cmd = append(cmd, chart.Dir(chartsDir, ""), name)
+			cmd = append(cmd, chart.Dir(chartsDir, localChartsDir, ""), name)
 		}
 
 		allValues := make(map[string]interface{})
@@ -196,9 +204,31 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 
 			currentValues := map[string]interface{}{}
 
+			subChartValuesFiles := []string{
+				filepath.Join(chart.Dir(chartsDir, localChartsDir, subChartName), baseValuesFile),
+			}
+			if subChartName != "" && baseValuesFile != constant.DefaultValuesFile {
+				// fallback to values.yaml
+				subChartValuesFiles = append(subChartValuesFiles,
+					filepath.Join(chart.Dir(chartsDir, localChartsDir, subChartName), constant.DefaultValuesFile),
+				)
+			}
+
 			data, fErr := ioutil.ReadFile(valuesFile)
 			if fErr != nil {
-				return fmt.Errorf("failed to read values from file %q: %w", valuesFile, fErr)
+				if subChartName == "" || !os.IsNotExist(fErr) {
+					return fmt.Errorf("failed to read values from file %q: %w", valuesFile, fErr)
+				}
+
+				// some sub chart may not contain any values file, check if has values in its dir
+				for _, f := range subChartValuesFiles {
+					_, fErr = os.Stat(f)
+					if fErr == nil {
+						return fmt.Errorf("inconsistent values file, please run `helm-stack ensure` to fix it")
+					}
+				}
+
+				continue
 			}
 
 			if mErr := yaml.Unmarshal(data, &currentValues); err != nil {
@@ -206,16 +236,7 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 			}
 
 			if subChartName != "" {
-				// get sub chart values
-				subChartValuesFiles := []string{
-					filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile),
-				}
-				if baseValuesFile != constant.DefaultValuesFile {
-					// fallback to values.yaml
-					subChartValuesFiles = append(subChartValuesFiles,
-						filepath.Join(chart.Dir(chartsDir, subChartName), constant.DefaultValuesFile),
-					)
-				}
+				// get sub chart base values
 				for _, subChartBaseValuesFile := range subChartValuesFiles {
 					data, fErr = ioutil.ReadFile(subChartBaseValuesFile)
 					// ignore this error

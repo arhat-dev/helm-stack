@@ -27,8 +27,16 @@ type ChartSpec struct {
 	NamespaceInTemplate bool `json:"namespaceInTemplate" yaml:"namespaceInTemplate"`
 }
 
-func (c ChartSpec) SubChartNames(chartsDir string) ([]string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(c.Dir(chartsDir, ""), "charts"))
+func (c ChartSpec) SubChartNames(chartsDir, localChartsDir string) ([]string, error) {
+	var baseDir string
+	switch {
+	case c.ChartSource != nil && c.ChartSource.Local != nil:
+		baseDir = localChartsDir
+	default:
+		baseDir = chartsDir
+	}
+
+	files, err := ioutil.ReadDir(filepath.Join(c.Dir(baseDir, localChartsDir, ""), "charts"))
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("failed to check sub charts")
 	}
@@ -43,14 +51,22 @@ func (c ChartSpec) SubChartNames(chartsDir string) ([]string, error) {
 	return result, nil
 }
 
-func (c ChartSpec) Dir(chartsDir string, subChartName string) string {
+func (c ChartSpec) Dir(chartsDir, localChartsDir string, subChartName string) string {
+	var baseDir string
+	switch {
+	case c.ChartSource != nil && c.ChartSource.Local != nil:
+		baseDir = localChartsDir
+	default:
+		baseDir = chartsDir
+	}
+
 	repoName, chartName, chartVersion := getChartRepoNameChartNameChartVersion(c.Name)
 
 	var dir string
 	if repoName != "" {
-		dir = filepath.Join(chartsDir, fmt.Sprintf("%s_%s", repoName, chartName))
+		dir = filepath.Join(baseDir, fmt.Sprintf("%s_%s", repoName, chartName))
 	} else {
-		dir = filepath.Join(chartsDir, chartName)
+		dir = filepath.Join(baseDir, chartName)
 	}
 
 	result := filepath.Join(dir, chartVersion)
@@ -68,6 +84,7 @@ func (c ChartSpec) Validate(repos map[string]*RepoSpec) error {
 	}
 
 	if c.ChartSource == nil || (c.ChartSource.Git == nil && c.ChartSource.Local == nil) {
+		// no custom source (git/local), using repo
 		if !strings.Contains(c.Name, "/") {
 			err = multierr.Append(err, fmt.Errorf("invalid chart without repo or custom source"))
 		} else {
@@ -89,8 +106,13 @@ func (c ChartSpec) Validate(repos map[string]*RepoSpec) error {
 }
 
 // nolint:gocyclo
-func (c ChartSpec) Ensure(ctx context.Context, forcePull bool, chartsDir string, repos map[string]*RepoSpec) error {
-	targetDir := c.Dir(chartsDir, "")
+func (c ChartSpec) Ensure(
+	ctx context.Context,
+	forcePull bool,
+	chartsDir, localChartsDir string,
+	repos map[string]*RepoSpec,
+) error {
+	targetDir := c.Dir(chartsDir, localChartsDir, "")
 
 	_, err := os.Stat(targetDir)
 	if err == nil && !forcePull {
@@ -312,7 +334,13 @@ func (c ChartSpec) Ensure(ctx context.Context, forcePull bool, chartsDir string,
 
 		return nil
 	case c.ChartSource.Local != nil:
-		// do nothing, let user create it inside charts dir
+		// check if chart exists
+		chartDir := c.Dir(chartsDir, localChartsDir, "")
+		_, err := os.Stat(chartDir)
+		if err != nil {
+			return fmt.Errorf("failed to check local chart: %w", err)
+		}
+		return nil
 	}
 
 	return nil

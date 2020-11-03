@@ -108,7 +108,7 @@ func collectChartsToRemove(config *conf.ResolvedConfig) ([]string, error) {
 		filesToRemove  []string
 	)
 	for _, c := range config.Charts {
-		chartDirWanted[c.Dir(config.App.ChartsDir, "")] = struct{}{}
+		chartDirWanted[c.Dir(config.App.ChartsDir, config.App.LocalChartsDir, "")] = struct{}{}
 	}
 
 	err := filepath.Walk(config.App.ChartsDir, func(path string, info os.FileInfo, e error) error {
@@ -156,7 +156,7 @@ func collectEnvironmentFilesToRemove(config *conf.ResolvedConfig, e *conf.Enviro
 			return nil, fmt.Errorf("chart %q does not exists", d.Chart)
 		}
 
-		subChartNames, err := chart.SubChartNames(config.App.ChartsDir)
+		subChartNames, err := chart.SubChartNames(config.App.ChartsDir, config.App.LocalChartsDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check sub charts")
 		}

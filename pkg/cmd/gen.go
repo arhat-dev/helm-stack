@@ -37,7 +37,13 @@ func runGen(ctx context.Context, config *conf.ResolvedConfig, names []string) er
 	for _, e := range toGen {
 		fmt.Println("--- Generating Manifests:", e.Name)
 
-		if err := e.Gen(ctx, config.App.ChartsDir, config.App.EnvironmentsDir, config.Charts); err != nil {
+		if err := e.Gen(
+			ctx,
+			config.App.ChartsDir,
+			config.App.LocalChartsDir,
+			config.App.EnvironmentsDir,
+			config.Charts,
+		); err != nil {
 			return fmt.Errorf("failed to generate manifests %q: %w", e.Name, err)
 		}
 	}

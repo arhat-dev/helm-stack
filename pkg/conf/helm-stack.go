@@ -38,6 +38,9 @@ type AppConfig struct {
 
 	// EnvironmentsDir for environment values
 	EnvironmentsDir string `json:"environmentsDir" yaml:"environmentsDir"`
+
+	// LocalChartsDir for charts stored locally
+	LocalChartsDir string `json:"localChartsDir" yaml:"localChartsDir"`
 }
 
 func (c *AppConfig) Override(o *AppConfig) *AppConfig {
@@ -49,6 +52,7 @@ func (c *AppConfig) Override(o *AppConfig) *AppConfig {
 		DebugHelm:       c.DebugHelm,
 		ChartsDir:       c.ChartsDir,
 		EnvironmentsDir: c.EnvironmentsDir,
+		LocalChartsDir:  c.LocalChartsDir,
 	}
 
 	if o.DebugHelm {
@@ -61,6 +65,10 @@ func (c *AppConfig) Override(o *AppConfig) *AppConfig {
 
 	if o.EnvironmentsDir != "" {
 		result.EnvironmentsDir = o.EnvironmentsDir
+	}
+
+	if o.LocalChartsDir != "" {
+		result.LocalChartsDir = o.LocalChartsDir
 	}
 
 	return result

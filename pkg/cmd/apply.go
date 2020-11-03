@@ -54,6 +54,7 @@ func runApply(ctx context.Context, config *conf.ResolvedConfig, dryRun bool, nam
 		func() {
 			buf := new(bytes.Buffer)
 			_, err = exechelper.Do(exechelper.Spec{
+				Context: ctx,
 				Command: []string{"kubectl", "version", "--client", "--output", "json"},
 				Stdout:  buf,
 				Stderr:  os.Stderr,

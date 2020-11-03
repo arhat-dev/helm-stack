@@ -87,6 +87,11 @@ func NewHelmStackCmd() *cobra.Command {
 				return fmt.Errorf("charts dir must not be empty")
 			}
 
+			// fallback to charts dir for local charts
+			if config.App.LocalChartsDir == "" {
+				config.App.LocalChartsDir = config.App.ChartsDir
+			}
+
 			if config.App.EnvironmentsDir == "" {
 				return fmt.Errorf("environments dir must not be empty")
 			}

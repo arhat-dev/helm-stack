@@ -40,7 +40,7 @@ func runEnsure(ctx context.Context, config *conf.ResolvedConfig, forcePull bool)
 	for _, c := range config.Charts {
 		fmt.Println("--- Ensuring Chart:", c.Name)
 
-		err := c.Ensure(ctx, forcePull, config.App.ChartsDir, config.Repos)
+		err := c.Ensure(ctx, forcePull, config.App.ChartsDir, config.App.LocalChartsDir, config.Repos)
 		if err != nil {
 			return fmt.Errorf("failed to ensure chart %q: %w", c.Name, err)
 		}
@@ -49,7 +49,13 @@ func runEnsure(ctx context.Context, config *conf.ResolvedConfig, forcePull bool)
 	for _, e := range config.Environments {
 		fmt.Println("--- Ensuring Environment:", e.Name)
 
-		if err := e.Ensure(ctx, config.App.ChartsDir, config.App.EnvironmentsDir, config.Charts); err != nil {
+		if err := e.Ensure(
+			ctx,
+			config.App.ChartsDir,
+			config.App.LocalChartsDir,
+			config.App.EnvironmentsDir,
+			config.Charts,
+		); err != nil {
 			return fmt.Errorf("failed to ensure deployment environment %q: %w", e.Name, err)
 		}
 	}

@@ -51,7 +51,7 @@ func (e Environment) Validate(charts map[string]*ChartSpec) error {
 	names := make(map[string]struct{})
 	for _, d := range e.Deployments {
 		if _, defined := names[d.Name]; defined {
-			multierr.Append(err, fmt.Errorf("duplicate deployment item %q", d.Name))
+			err = multierr.Append(err, fmt.Errorf("duplicate deployment item %q", d.Name))
 		}
 
 		err = multierr.Append(err, d.Validate(charts))

@@ -20,17 +20,13 @@ func getChartRepoNameChartNameChartVersion(name string) (repoName, chartName, ch
 	parts := strings.SplitN(name, "@", 2)
 	chartName, chartVersion = parts[0], parts[1]
 
-	if chartVersion == "" {
-		chartVersion = "latest"
-	}
-
-	parts = strings.SplitN(chartName, "/", 2)
-	switch len(parts) {
+	nameParts := strings.SplitN(chartName, "/", 2)
+	switch len(nameParts) {
 	case 1:
 		return
 	case 2:
-		repoName = parts[0]
-		chartName = parts[1]
+		repoName = nameParts[0]
+		chartName = nameParts[1]
 		return
 	}
 

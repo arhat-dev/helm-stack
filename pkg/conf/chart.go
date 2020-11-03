@@ -79,7 +79,7 @@ func (c ChartSpec) Dir(chartsDir, localChartsDir string, subChartName string) st
 
 func (c ChartSpec) Validate(repos map[string]*RepoSpec) error {
 	var err error
-	if !strings.Contains(c.Name, "@") {
+	if !strings.Contains(c.Name, "@") || strings.HasSuffix(c.Name, "@") {
 		err = multierr.Append(err, fmt.Errorf("chart name must inclue version info"))
 	}
 

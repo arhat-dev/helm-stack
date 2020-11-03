@@ -105,9 +105,23 @@ func (e Environment) Ensure(ctx context.Context, chartsDir, envDir string, chart
 			}
 
 			if subChartName != "" {
-				// a sub chart, may not contain target values
-				srcValuesFile = filepath.Join(chart.Dir(chartsDir, subChartName), constant.DefaultValuesFile)
-				err = iohelper.CopyFile(srcValuesFile, destValuesFile)
+				// this is a sub chart, may not contain target values file
+				subChartValuesFiles := []string{
+					filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile),
+				}
+				if baseValuesFile != constant.DefaultValuesFile {
+					// fallback to values.yaml
+					subChartValuesFiles = append(subChartValuesFiles,
+						filepath.Join(chart.Dir(chartsDir, subChartName), constant.DefaultValuesFile),
+					)
+				}
+				for _, srcValuesFile := range subChartValuesFiles {
+					err = iohelper.CopyFile(srcValuesFile, destValuesFile)
+					if os.IsNotExist(err) {
+						// values file not found in sub chart, just ignore it
+						err = nil
+					}
+				}
 			}
 
 			if err != nil {
@@ -186,27 +200,48 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 				return fmt.Errorf("failed to parse values from file %q: %w", valuesFile, mErr)
 			}
 
-			if subChartName != "" && baseValuesFile != constant.DefaultValuesFile {
-				subChartBaseValuesFile := filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile)
-				data, fErr = ioutil.ReadFile(subChartBaseValuesFile)
-				// ignore this error
-				if fErr != nil && !os.IsNotExist(fErr) {
-					return fmt.Errorf("failed to check sub chart base values %q: %w", subChartBaseValuesFile, fErr)
+			if subChartName != "" {
+				// get sub chart values
+				subChartValuesFiles := []string{
+					filepath.Join(chart.Dir(chartsDir, subChartName), baseValuesFile),
 				}
+				if baseValuesFile != constant.DefaultValuesFile {
+					// fallback to values.yaml
+					subChartValuesFiles = append(subChartValuesFiles,
+						filepath.Join(chart.Dir(chartsDir, subChartName), constant.DefaultValuesFile),
+					)
+				}
+				for _, subChartBaseValuesFile := range subChartValuesFiles {
+					data, fErr = ioutil.ReadFile(subChartBaseValuesFile)
+					// ignore this error
+					if fErr != nil {
+						if !os.IsNotExist(fErr) {
+							return fmt.Errorf(
+								"failed to check sub chart base values %q: %w",
+								subChartBaseValuesFile, fErr,
+							)
+						}
 
-				subChartBaseValues := make(map[string]interface{})
-				if fErr == nil {
-					if mErr := yaml.Unmarshal(data, &subChartBaseValues); mErr != nil {
-						return fmt.Errorf("failed to parse sub chart base values from file %q: %w", valuesFile, mErr)
+						continue
 					}
 
-					switch t := allValues[subChartName].(type) {
-					case map[string]interface{}:
-						allValues[subChartName] = mergeMaps(t, subChartBaseValues)
-					case nil:
-						allValues[subChartName] = subChartBaseValues
-					default:
-						return fmt.Errorf("invalid sub chart values in main values file: %v", t)
+					subChartBaseValues := make(map[string]interface{})
+					if fErr == nil {
+						if mErr := yaml.Unmarshal(data, &subChartBaseValues); mErr != nil {
+							return fmt.Errorf(
+								"failed to parse sub chart base values from file %q: %w",
+								valuesFile, mErr,
+							)
+						}
+
+						switch t := allValues[subChartName].(type) {
+						case map[string]interface{}:
+							allValues[subChartName] = mergeMaps(t, subChartBaseValues)
+						case nil:
+							allValues[subChartName] = subChartBaseValues
+						default:
+							return fmt.Errorf("invalid sub chart values in main values file: %v", t)
+						}
 					}
 				}
 			}
@@ -214,6 +249,7 @@ func (e Environment) Gen(ctx context.Context, chartsDir, envDir string, charts m
 			if subChartName == "" {
 				allValues = mergeMaps(allValues, currentValues)
 			} else {
+				// merge sub chart values
 				switch t := allValues[subChartName].(type) {
 				case map[string]interface{}:
 					allValues[subChartName] = mergeMaps(t, currentValues)

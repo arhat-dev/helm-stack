@@ -48,13 +48,29 @@ jobs:
 
   unit-tests:
     if: contains(github.head_ref, 'deps/') == false
-    container:
-      image: arhatdev/builder-go:debian
     needs:
     - stylecheck
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        go:
+        - 1.14.x
+        # there are some issues for fuzz test with go1.15
+        - 1.15.x
+        os:
+        - macos-latest
+        - windows-latest
+        - ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
+
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
     - name: Test Packages
       run: |
         make test.pkg

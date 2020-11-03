@@ -4,7 +4,7 @@ environments:
   kubeContext: ""
   deployments:
   - name: storage/postgres
-    chart: postgres-operator@master
+    chart: postgres-operator@v1.5.0
 
   - name: storage/es
     chart: elasticsearch@7.8.0

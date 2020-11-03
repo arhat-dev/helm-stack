@@ -67,6 +67,7 @@ jobs:
     - uses: azure/setup-kubectl@v1
       with:
         version: latest
+
     - uses: azure/setup-helm@v1
       with:
         version: latest

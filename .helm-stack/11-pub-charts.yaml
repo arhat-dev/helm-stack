@@ -1,6 +1,6 @@
 charts:
 - name: oteemo/sonatype-nexus@2.3.0
-- name: postgres-operator@master
+- name: postgres-operator@v1.5.0
   git:
     url: https://github.com/zalando/postgres-operator
     path: charts/postgres-operator

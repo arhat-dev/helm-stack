@@ -332,7 +332,7 @@ func (e Environment) Gen(
 				Context: ctx,
 				Command: cmd,
 				Stdout:  manifestFile,
-				Stderr:  os.Stderr,
+				Stderr:  os.Stdout,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to generate manifest: %w", err)
@@ -405,7 +405,7 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 			Context: ctx,
 			Command: applyCmd,
 			Stdout:  os.Stdout,
-			Stderr:  os.Stderr,
+			Stderr:  os.Stdout,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to execute kubectl apply: %w", err)
@@ -433,7 +433,7 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 			Context: ctx,
 			Command: customApply,
 			Stdout:  os.Stdout,
-			Stderr:  os.Stderr,
+			Stderr:  os.Stdout,
 		})
 		if err != nil {
 			if s.Present {

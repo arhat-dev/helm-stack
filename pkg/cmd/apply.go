@@ -52,6 +52,7 @@ func runApply(ctx context.Context, config *conf.ResolvedConfig, dryRun bool, nam
 		dryRunArg = "--dry-run"
 
 		func() {
+			// check kubectl version
 			buf := new(bytes.Buffer)
 			_, err = exechelper.Do(exechelper.Spec{
 				Context: ctx,

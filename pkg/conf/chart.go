@@ -183,7 +183,7 @@ func (c ChartSpec) Ensure(
 					"helm", "repo", "add", "--no-update",
 					fakeRepoName, repo.URL}, repoExtraArgs...),
 				Stdout: os.Stdout,
-				Stderr: os.Stderr,
+				Stderr: os.Stdout,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to add temporary repo %q for version probe: %w", repo.Name, err)
@@ -200,7 +200,7 @@ func (c ChartSpec) Ensure(
 					Context: ctx,
 					Command: []string{"helm", "repo", "remove", fakeRepoName},
 					Stdout:  os.Stdout,
-					Stderr:  os.Stderr,
+					Stderr:  os.Stdout,
 				})
 				if rmErr != nil {
 					_, _ = fmt.Fprintf(os.Stderr,
@@ -214,7 +214,7 @@ func (c ChartSpec) Ensure(
 				Context: ctx,
 				Command: []string{"helm", "repo", "update"},
 				Stdout:  os.Stdout,
-				Stderr:  os.Stderr,
+				Stderr:  os.Stdout,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to update helm repos: %w", err)
@@ -249,7 +249,7 @@ func (c ChartSpec) Ensure(
 				Context: ctx,
 				Command: []string{"helm", "repo", "remove", fakeRepoName},
 				Stdout:  os.Stdout,
-				Stderr:  os.Stderr,
+				Stderr:  os.Stdout,
 			})
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr,
@@ -288,7 +288,7 @@ func (c ChartSpec) Ensure(
 			Context: ctx,
 			Command: append(fetchCmd, append(repoExtraArgs, chartName)...),
 			Stdout:  os.Stdout,
-			Stderr:  os.Stderr,
+			Stderr:  os.Stdout,
 		})
 		if err != nil {
 			return fmt.Errorf("helm fetch command exited with code %d: %w", exitCode, err)
@@ -314,7 +314,7 @@ func (c ChartSpec) Ensure(
 			Context: ctx,
 			Command: []string{"git", "clone", "--branch", chartVersion, "--depth", "1", config.URL, tmpDir},
 			Stdout:  os.Stdout,
-			Stderr:  os.Stderr,
+			Stderr:  os.Stdout,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to clone repo %q: %w", config.URL, err)

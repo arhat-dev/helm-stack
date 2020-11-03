@@ -122,7 +122,10 @@ helm-stack.windows.armv7:
 
 helm-stack.windows.all: \
 	helm-stack.windows.x86 \
-	helm-stack.windows.amd64
+	helm-stack.windows.amd64 \
+	helm-stack.windows.armv5 \
+	helm-stack.windows.armv6 \
+	helm-stack.windows.armv7
 
 # # android build requires android sdk
 # helm-stack.android.amd64:

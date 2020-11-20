@@ -32,7 +32,7 @@ replace (
 )
 
 require (
-	arhat.dev/pkg v0.1.1
+	arhat.dev/pkg v0.4.4
 	github.com/rogpeppe/go-internal v1.6.2
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1

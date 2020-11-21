@@ -328,14 +328,18 @@ func (e Environment) Gen(
 			}
 			defer func() { _ = manifestFile.Close() }()
 
-			_, err = exechelper.Do(exechelper.Spec{
+			proc, err2 := exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: cmd,
 				Stdout:  manifestFile,
 				Stderr:  os.Stdout,
 			})
-			if err != nil {
-				return fmt.Errorf("failed to generate manifest: %w", err)
+			if err2 != nil {
+				return fmt.Errorf("failed to execute helm template command: %w", err2)
+			}
+			_, err2 = proc.Wait()
+			if err2 != nil {
+				return fmt.Errorf("failed to generate manifest: %w", err2)
 			}
 
 			return nil
@@ -385,12 +389,15 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 		// ensure namespace (best effort)
 		nsCreateCmd := assembleCommandWithoutEmptyString(kubectlCmd, "create", dryRunArg, "namespace", namespace)
 		fmt.Println("Executing:", strings.Join(nsCreateCmd, " "))
-		_, _ = exechelper.Do(exechelper.Spec{
+		proc, err := exechelper.Do(exechelper.Spec{
 			Context: ctx,
 			Command: nsCreateCmd,
 			Stdout:  ioutil.Discard,
 			Stderr:  ioutil.Discard,
 		})
+		if err == nil {
+			_, _ = proc.Wait()
+		}
 
 		manifestFile := filepath.Join(e.ManifestsDir(envDir), d.Filename(""))
 
@@ -401,12 +408,17 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 		}
 
 		fmt.Println("Executing:", strings.Join(applyCmd, " "))
-		_, err := exechelper.Do(exechelper.Spec{
+		proc, err = exechelper.Do(exechelper.Spec{
 			Context: ctx,
 			Command: applyCmd,
 			Stdout:  os.Stdout,
 			Stderr:  os.Stdout,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to execute kubectl apply command: %w", err)
+		}
+		_, err = proc.Wait()
+
 		if err != nil {
 			return fmt.Errorf("failed to execute kubectl apply: %w", err)
 		}
@@ -429,12 +441,16 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 		customApply := assembleCommandWithoutEmptyString(kubectlCmd,
 			append(action, dryRunArg, "--recursive", "--filename", cDir)...)
 		fmt.Println("Executing:", strings.Join(customApply, " "))
-		_, err = exechelper.Do(exechelper.Spec{
+		proc, err = exechelper.Do(exechelper.Spec{
 			Context: ctx,
 			Command: customApply,
 			Stdout:  os.Stdout,
 			Stderr:  os.Stdout,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to execute kubectl apply command: %w", err)
+		}
+		_, err = proc.Wait()
 		if err != nil {
 			if s.Present {
 				// failed to apply (error!)

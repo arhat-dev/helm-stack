@@ -54,20 +54,23 @@ func runApply(ctx context.Context, config *conf.ResolvedConfig, dryRun bool, nam
 		func() {
 			// check kubectl version
 			buf := new(bytes.Buffer)
-			_, err = exechelper.Do(exechelper.Spec{
+			cmd, err := exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: []string{"kubectl", "version", "--client", "--output", "json"},
 				Stdout:  buf,
 				Stderr:  os.Stderr,
 			})
-
+			if err != nil {
+				return
+			}
+			_, err = cmd.Wait()
 			if err != nil {
 				return
 			}
 
 			dec := json.NewDecoder(buf)
 			ver := new(version.Version)
-			err := dec.Decode(ver)
+			err = dec.Decode(ver)
 			if err != nil && ver.ClientVersion == nil {
 				return
 			}

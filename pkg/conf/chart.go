@@ -177,7 +177,7 @@ func (c ChartSpec) Ensure(
 			// add a repo with random name (do not mess with existing repos)
 			fakeRepoName := generateRandomName(repo.Name)
 
-			_, err := exechelper.Do(exechelper.Spec{
+			proc, err := exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: append([]string{
 					"helm", "repo", "add", "--no-update",
@@ -185,6 +185,10 @@ func (c ChartSpec) Ensure(
 				Stdout: os.Stdout,
 				Stderr: os.Stdout,
 			})
+			if err != nil {
+				return fmt.Errorf("failed to execute command: %w", err)
+			}
+			_, err = proc.Wait()
 			if err != nil {
 				return fmt.Errorf("failed to add temporary repo %q for version probe: %w", repo.Name, err)
 			}
@@ -196,13 +200,22 @@ func (c ChartSpec) Ensure(
 					return
 				}
 
-				_, rmErr := exechelper.Do(exechelper.Spec{
+				proc2, rmErr := exechelper.Do(exechelper.Spec{
 					// do not use real context since we want to remove it at best effort
 					Context: context.TODO(),
 					Command: []string{"helm", "repo", "remove", fakeRepoName},
 					Stdout:  os.Stdout,
 					Stderr:  os.Stdout,
 				})
+				if err != nil {
+					_, _ = fmt.Fprintf(os.Stderr,
+						"failed to execute helm repo remove %q after version probe, clean it yourself: %v",
+						fakeRepoName, rmErr,
+					)
+					return
+				}
+
+				_, err = proc2.Wait()
 				if rmErr != nil {
 					_, _ = fmt.Fprintf(os.Stderr,
 						"failed to delete temporary repo %q after version probe, clean it yourself: %v",
@@ -211,12 +224,16 @@ func (c ChartSpec) Ensure(
 				}
 			}()
 
-			_, err = exechelper.Do(exechelper.Spec{
+			proc, err = exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: []string{"helm", "repo", "update"},
 				Stdout:  os.Stdout,
 				Stderr:  os.Stdout,
 			})
+			if err != nil {
+				return fmt.Errorf("failed to execute repo update command: %w", err)
+			}
+			_, err = proc.Wait()
 			if err != nil {
 				return fmt.Errorf("failed to update helm repos: %w", err)
 			}
@@ -235,23 +252,31 @@ func (c ChartSpec) Ensure(
 			}
 
 			buf := new(bytes.Buffer)
-			_, err = exechelper.Do(exechelper.Spec{
+			proc, err = exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: append(searchCmd, filepath.Join(fakeRepoName, chartName)),
 				Stdout:  buf,
 				Stderr:  buf,
 			})
 			if err != nil {
+				return fmt.Errorf("failed to execute repo search command: %w", err)
+			}
+			_, err = proc.Wait()
+			if err != nil {
 				return fmt.Errorf("failed to get latest chart version of %q: %w", c.Name, err)
 			}
 
 			clearTempRepo = false
-			_, err = exechelper.Do(exechelper.Spec{
+			proc, err = exechelper.Do(exechelper.Spec{
 				Context: ctx,
 				Command: []string{"helm", "repo", "remove", fakeRepoName},
 				Stdout:  os.Stdout,
 				Stderr:  os.Stdout,
 			})
+			if err != nil {
+				return fmt.Errorf("failed to execute repo remove command: %w", err)
+			}
+			_, err = proc.Wait()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr,
 					"failed to delete temporary repo %q after version probe, clean it yourself: %v", fakeRepoName, err)
@@ -285,12 +310,16 @@ func (c ChartSpec) Ensure(
 			fetchCmd = append(fetchCmd, "--version", chartVersion)
 		}
 
-		exitCode, err := exechelper.Do(exechelper.Spec{
+		proc, err := exechelper.Do(exechelper.Spec{
 			Context: ctx,
 			Command: append(fetchCmd, append(repoExtraArgs, chartName)...),
 			Stdout:  os.Stdout,
 			Stderr:  os.Stdout,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to execute command: %w", err)
+		}
+		exitCode, err := proc.Wait()
 		if err != nil {
 			return fmt.Errorf("helm fetch command exited with code %d: %w", exitCode, err)
 		}
@@ -311,12 +340,16 @@ func (c ChartSpec) Ensure(
 		return nil
 	case c.ChartSource.Git != nil:
 		config := c.ChartSource.Git
-		_, err := exechelper.Do(exechelper.Spec{
+		proc, err := exechelper.Do(exechelper.Spec{
 			Context: ctx,
 			Command: []string{"git", "clone", "--branch", chartVersion, "--depth", "1", config.URL, tmpDir},
 			Stdout:  os.Stdout,
 			Stderr:  os.Stdout,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to execute command: %w", err)
+		}
+		_, err = proc.Wait()
 		if err != nil {
 			return fmt.Errorf("failed to clone repo %q: %w", config.URL, err)
 		}

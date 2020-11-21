@@ -43,17 +43,23 @@ func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
 
 func isHelmV2() bool {
 	buf := new(bytes.Buffer)
-	_, err := exechelper.Do(exechelper.Spec{
+	proc, err := exechelper.Do(exechelper.Spec{
 		Command: []string{"helm", "version", "--client", "--short"},
 		Stdout:  buf,
 		Stderr:  ioutil.Discard,
 	})
 
+	// default to helm3 even when error happened
+
+	if err != nil {
+		return false
+	}
+	_, err = proc.Wait()
+
 	if err != nil {
 		return false
 	}
 
-	// default to helm3
 	ver := strings.TrimSpace(strings.TrimPrefix(buf.String(), "Client:"))
 	return semver.Compare(ver, "v3") < 0
 }

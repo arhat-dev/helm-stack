@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"arhat.dev/pkg/confhelper"
+	"arhat.dev/pkg/tlshelper"
 	"go.uber.org/multierr"
 )
 
@@ -18,7 +18,7 @@ type RepoSpec struct {
 		} `json:"httpBasic" yaml:"httpBasic"`
 	} `json:"auth" yaml:"auth"`
 
-	TLS confhelper.TLSConfig `json:"tls" yaml:"tls"`
+	TLS tlshelper.TLSConfig `json:"tls" yaml:"tls"`
 }
 
 func (r RepoSpec) Validate() error {

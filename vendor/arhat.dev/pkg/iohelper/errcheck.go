@@ -14,14 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package exechelper
+package iohelper
 
-import "syscall"
+import (
+	"errors"
+	_ "unsafe" // for go:linkname
+)
 
-func getSysProcAttr(setsid bool) *syscall.SysProcAttr {
-	if setsid {
-		return nil
-	}
+// ErrDeadlineExceeded is the export of internal/poll.ErrDeadlineExceeded
+// which is the same as os.ErrDeadlineExceeded in go1.15 and onwards
+//
+//go:linkname ErrDeadlineExceeded internal/poll.ErrDeadlineExceeded
+var ErrDeadlineExceeded error
 
-	return &syscall.SysProcAttr{}
+func IsDeadlineExceeded(err error) bool {
+	return errors.Is(err, ErrDeadlineExceeded)
 }

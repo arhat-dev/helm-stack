@@ -2,6 +2,19 @@ module arhat.dev/helm-stack
 
 go 1.15
 
+require (
+	arhat.dev/pkg v0.5.4-0.20201208233302-107b8822e93b
+	github.com/rogpeppe/go-internal v1.6.2
+	github.com/spf13/cobra v1.1.1
+	github.com/stretchr/testify v1.6.1
+	go.uber.org/multierr v1.6.0
+	k8s.io/apimachinery v0.19.4
+	k8s.io/kubectl v0.19.4
+	sigs.k8s.io/yaml v1.2.0
+)
+
+replace github.com/creack/pty => github.com/jeffreystoke/pty v1.1.12-0.20201126201855-c1c1e24408f9
+
 replace (
 	k8s.io/api => github.com/kubernetes/api v0.19.4
 	k8s.io/apiextensions-apiserver => github.com/kubernetes/apiextensions-apiserver v0.19.4
@@ -29,15 +42,4 @@ replace (
 	k8s.io/sample-apiserver => github.com/kubernetes/sample-apiserver v0.19.4
 	k8s.io/utils => github.com/kubernetes/utils v0.0.0-20201027101359-01387209bb0d
 	vbom.ml/util => github.com/fvbommel/util v0.0.2
-)
-
-require (
-	arhat.dev/pkg v0.4.4
-	github.com/rogpeppe/go-internal v1.6.2
-	github.com/spf13/cobra v1.1.1
-	github.com/stretchr/testify v1.6.1
-	go.uber.org/multierr v1.6.0
-	k8s.io/apimachinery v0.19.4
-	k8s.io/kubectl v0.19.4
-	sigs.k8s.io/yaml v1.2.0
 )

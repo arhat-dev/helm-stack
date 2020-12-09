@@ -1,3 +1,5 @@
+// +build !nohashhelper_sha256
+
 /*
 Copyright 2020 The arhat.dev Authors.
 
@@ -14,14 +16,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package exechelper
+package hashhelper
 
 import (
-	"syscall"
+	"crypto/sha256"
 )
 
-func getSysProcAttr(tty bool) *syscall.SysProcAttr {
-	return &syscall.SysProcAttr{
-		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
-	}
+func Sha256Sum(data []byte) []byte {
+	h := sha256.New()
+	_, _ = h.Write(data)
+	return h.Sum(nil)
 }

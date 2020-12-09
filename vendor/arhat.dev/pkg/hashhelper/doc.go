@@ -1,5 +1,3 @@
-// +build !go1.15
-
 /*
 Copyright 2020 The arhat.dev Authors.
 
@@ -16,21 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package iohelper
-
-import (
-	"errors"
-	"strings"
-)
-
-var (
-	ErrDeadlineExceeded = errors.New("i/o timeout")
-)
-
-func isDeadlineExceeded(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	return strings.HasSuffix(err.Error(), "i/o timeout")
-}
+package hashhelper

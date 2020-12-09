@@ -17,13 +17,15 @@ limitations under the License.
 package iohelper
 
 import (
+	"bufio"
 	"io"
-	"sync"
+	"runtime"
 	"sync/atomic"
+	"syscall"
 	"time"
 )
 
-// NewTimeoutReader creates a new idle timeout reader
+// NewTimeoutReader creates a new idle timeout reader from a blocking reader
 func NewTimeoutReader(r io.Reader) *TimeoutReader {
 	var (
 		setReadDeadline   func(t time.Time) error
@@ -31,24 +33,27 @@ func NewTimeoutReader(r io.Reader) *TimeoutReader {
 	)
 
 	// check if can set read deadline
-	rs, ok := r.(interface {
+	rs, canSetReadDeadline := r.(interface {
 		SetReadDeadline(t time.Time) error
 	})
 
 	// clear read deadline in advance to check set deadline capability
-	if ok && rs.SetReadDeadline(time.Time{}) == nil {
+	if canSetReadDeadline && rs.SetReadDeadline(time.Time{}) == nil {
 		setReadDeadline = rs.SetReadDeadline
 	} else {
 		// mark set read deadline not working
 		close(cannotSetDeadline)
 	}
 
+	// create an idle timer when reader doesn't support SetReadDeadline
 	timer := time.NewTimer(0)
 	if !timer.Stop() {
 		<-timer.C
 	}
 
 	return &TimeoutReader{
+		buf: make([]byte, 0, 8),
+
 		timer: timer,
 
 		setReadDeadline:   setReadDeadline,
@@ -66,14 +71,13 @@ func NewTimeoutReader(r io.Reader) *TimeoutReader {
 		maxRead:  0,
 		dataFull: make(chan struct{}),
 
-		oneByte: make([]byte, 1),
-
 		err: new(atomic.Value),
-		mu:  new(sync.RWMutex),
+
+		_working: 0,
 	}
 }
 
-// TimeoutReader is a reader with read timeout
+// TimeoutReader is a reader with read timeout support
 //
 // It is designed for those want to read some data from a stream, and the size
 // of the data is unknown, but still want to pipe data to some destination at
@@ -86,8 +90,8 @@ func NewTimeoutReader(r io.Reader) *TimeoutReader {
 // 	was sending a large chunk of data over stdin?
 //
 // 	for raw tcp connection that's fine if you have configured tcp buffering correctly,
-// 	but for packet oriented connections (in this case MQTT), send one packet per byte
-// 	will signaficantly increase protocol overhead.
+// 	but for packet oriented connections (in this case MQTT), send one byte per packet
+// 	will significantly increase protocol overhead.
 //
 // 	with TimeoutReader we can read data generated in some interval (say 20ms), no
 //  real-time experience lost while still keep protocol overhead at a reasonable level
@@ -101,7 +105,7 @@ type TimeoutReader struct {
 
 	r io.Reader
 
-	// signal to notify user can do ReadUntilTimeout operation
+	// signal to notify user can cal Read
 	hasData chan struct{}
 
 	maxRead  int
@@ -111,10 +115,9 @@ type TimeoutReader struct {
 	firstByteReady   chan struct{}
 	firstByte        chan byte
 
-	oneByte []byte
-
 	err *atomic.Value
-	mu  *sync.RWMutex
+
+	_working uint32
 }
 
 // Error returns the error happened during reading in background
@@ -129,32 +132,71 @@ func (t *TimeoutReader) Error() error {
 }
 
 func (t *TimeoutReader) requestMaxRead(size int) <-chan struct{} {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	var ret <-chan struct{}
+	t.doExclusive(func() {
+		t.maxRead = size
 
-	t.maxRead = size
+		select {
+		case <-t.dataFull:
+			t.dataFull = make(chan struct{})
+		default:
+			// reuse sig channel
+		}
 
-	select {
-	case <-t.dataFull:
-		t.dataFull = make(chan struct{})
-	default:
-		// reuse sig channel
-	}
+		ret = t.dataFull
+	})
 
-	return t.dataFull
+	return ret
 }
 
-// FallbackReading is a helper routine for data reading from readers has no SetReadDeadline
-// or SetReadDeadline failed when being called
+func (t *TimeoutReader) doExclusive(f func()) {
+	for !atomic.CompareAndSwapUint32(&t._working, 0, 1) {
+		runtime.Gosched()
+	}
+
+	f()
+
+	atomic.StoreUint32(&t._working, 0)
+}
+
+type bufferedReader interface {
+	io.Reader
+	io.ByteReader
+	Buffered() int
+}
+
+type fdBufferedReader struct {
+	fd uintptr
+	io.Reader
+
+	oneByteBuf []byte
+}
+
+func (r *fdBufferedReader) ReadByte() (byte, error) {
+	_, err := io.ReadFull(r, r.oneByteBuf[:1])
+	return r.oneByteBuf[0], err
+}
+
+func (r *fdBufferedReader) Buffered() int {
+	n, _ := CheckBytesToRead(r.fd)
+	return n
+}
+
+// FallbackReading is a helper routine for data reading/waiting
+// for readers with SetReadDeadline support, it is used for waiting until data prepared (WaitForData)
+// for other readers without SetReadDeadline, it is in (buffered) one byte read mode (WaitForData and Read)
 //
-// this function will block until EOF or error, so must be called in a goroutine other than
-// the one you are reading data
+// this function will block until EOF or error reading, so must be called in a goroutine other than
+// the one you are reading data, and once called, you should never access the raw reader you have provided
+// directly unless you are sure it is not read
 //
-// NOTE: this function MUST be called no more than once
+// NOTE: this function MUST be called exactly once
+// nolint:gocyclo
 func (t *TimeoutReader) FallbackReading(stopSig <-chan struct{}) {
 	var (
-		n   int
-		err error
+		n          int
+		err        error
+		oneByteBuf [1]byte
 	)
 
 loop:
@@ -165,6 +207,9 @@ loop:
 		case <-t.cannotSetDeadline:
 			break loop
 		case <-t.readOneByteReqCh:
+			// user called WaitForData
+			//
+			// clear read deadline, read in block mode
 			err = t.setReadDeadline(time.Time{})
 			if err != nil {
 				// set read deadline not working
@@ -173,11 +218,11 @@ loop:
 			}
 
 			// read one byte in blocking mode
-			n, err = t.r.Read(t.oneByte)
+			n, err = t.r.Read(oneByteBuf[:1])
 			if n == 1 {
 				// notify wait for data
 				t.firstByteReady <- struct{}{}
-				t.firstByte <- t.oneByte[0]
+				t.firstByte <- oneByteBuf[0]
 			} else {
 				// no data read, failed, try to fallback
 				close(t.cannotSetDeadline)
@@ -201,7 +246,7 @@ loop:
 	// case 2: SetReadDeadline function call failed
 
 	// check if reader is ok
-	_, err = t.r.Read(t.oneByte[:0])
+	_, err = t.r.Read(oneByteBuf[:0])
 	if err != nil {
 		// reader got some error, usually closed
 		close(t.hasData)
@@ -209,51 +254,132 @@ loop:
 		return
 	}
 
+	br, isBufferedReader := t.r.(bufferedReader)
+	if !isBufferedReader {
+
+		var (
+			fd    uintptr
+			hasFd = false
+		)
+		switch r := t.r.(type) {
+		case interface{ Fd() uintptr }:
+			fd = r.Fd()
+
+			// test if syscall supported
+			_, err = CheckBytesToRead(fd)
+			hasFd = err == nil
+		case interface {
+			SyscallConn() (syscall.RawConn, error)
+		}:
+			var (
+				rawConn syscall.RawConn
+			)
+			rawConn, err = r.SyscallConn()
+			if err != nil {
+				break
+			}
+
+			err = rawConn.Control(func(_fd uintptr) {
+				fd = _fd
+			})
+			if err != nil {
+				break
+			}
+
+			// test if syscall supported
+			_, err = CheckBytesToRead(fd)
+			hasFd = err == nil
+		}
+
+		if hasFd {
+			br = &fdBufferedReader{
+				fd:         fd,
+				Reader:     t.r,
+				oneByteBuf: oneByteBuf[:],
+			}
+		} else {
+			br = bufio.NewReader(t.r)
+		}
+	}
+
+	var initialByte byte
 	for {
-		// read one byte a time to avoid being blocked
-		n, err = t.r.Read(t.oneByte)
-		switch n {
-		case 0:
-			// no bytes read or error happened, exit now
-			if err == nil {
-				err = io.EOF
-			}
+		// read one byte to avoid being blocked
+		initialByte, err = br.ReadByte()
+		if err != nil {
+			t.err.Store(err)
 
-			t.mu.Lock()
+			// release signal to cancel potential wait
+			t.doExclusive(func() {
+				select {
+				case <-t.hasData:
+				default:
+					close(t.hasData)
+				}
+			})
 
-			select {
-			case <-t.hasData:
-			default:
-				close(t.hasData)
-			}
+			return
+		}
 
-			t.mu.Unlock()
-		case 1:
-			t.mu.Lock()
-
+		// avoid unexpected access to t.buf
+		t.doExclusive(func() {
 			// rely on the default slice grow
-			t.buf = append(t.buf, t.oneByte[0])
+			t.buf = append(t.buf, initialByte)
 
+			// read all buffered data
+			start := len(t.buf)
+			n = br.Buffered()
+			end := start + n
+
+			// notify read wait
 			select {
 			case <-t.hasData:
 			default:
 				close(t.hasData)
 			}
 
-			// signal data full
-			if len(t.buf) >= t.maxRead {
+			if n == 0 {
+				// notify data full
+				if end >= t.maxRead {
+					select {
+					case <-t.dataFull:
+					default:
+						close(t.dataFull)
+					}
+				}
+				return
+			}
+
+			if c := cap(t.buf); c < end {
+				// grow slice for reading buffered data
+				buf := make([]byte, end, 2*c+n)
+				_ = copy(buf, t.buf)
+				t.buf = buf
+			}
+
+			// usually should read end-start bytes, record n just in case
+			n, err = br.Read(t.buf[start:end])
+			if err != nil {
+				t.err.Store(err)
+				// usually should not happen since has been buffered
+				//
+				// do not return here since we wiil check error outside
+			}
+
+			end = start + n
+			t.buf = t.buf[:end]
+
+			// notify data full
+			if end >= t.maxRead {
 				select {
 				case <-t.dataFull:
 				default:
 					close(t.dataFull)
 				}
 			}
-
-			t.mu.Unlock()
-		}
+		})
 
 		if err != nil {
-			t.err.Store(err)
 			return
 		}
 
@@ -267,21 +393,25 @@ loop:
 }
 
 func (t *TimeoutReader) hasDataInBuf() bool {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	var ret bool
+	t.doExclusive(func() {
+		ret = len(t.buf) != 0
+	})
 
-	return len(t.buf) != 0
+	return ret
 }
 
 // WaitForData is a helper function used to check if there is data available in reader
 // so we can reduce actual call of Read when the timeout is a short duration
 //
-// when return value is true, you can call Read to read data, otherwise, false means
-// the stopSig has signaled, and we have no idea whether you should continue Read
-// from the reader
-func (t *TimeoutReader) WaitForData(stopSig <-chan struct{}) bool {
+// when return value is true, you MUST call Read to read data and you can read at least
+// one byte from the underlying reader
+//
+// otherwise, false means the provided cancel has signaled or error happened, you can no
+// longer read from the underlying reader if Error() returned non-nil value.
+func (t *TimeoutReader) WaitForData(cancel <-chan struct{}) bool {
 	select {
-	case <-stopSig:
+	case <-cancel:
 		return false
 	case <-t.cannotSetDeadline:
 		// not using set read deadline
@@ -289,14 +419,15 @@ func (t *TimeoutReader) WaitForData(stopSig <-chan struct{}) bool {
 	case t.readOneByteReqCh <- struct{}{}:
 		// using set read deadline, wait for first byte
 		select {
-		case <-stopSig:
+		case <-cancel:
 			return false
 		case <-t.cannotSetDeadline:
 			// in one byte read mode, wait until has data
 			break
 		case _, ok := <-t.firstByteReady:
-			// can set read timeout and first byte read
-			// NOTE: this channel branch must be after t.cannotSetDeadline
+			// can set read timeout and have read first byte
+			//
+			// NOTE: this case branch must be after t.cannotSetDeadline
 			if ok {
 				return true
 			}
@@ -312,17 +443,15 @@ func (t *TimeoutReader) WaitForData(stopSig <-chan struct{}) bool {
 	}
 
 	// take a snapshot of the channel pointer in case it got recreated
-	t.mu.RLock()
-	hasData := t.hasData
-	t.mu.RUnlock()
+	var hasData <-chan struct{}
+	t.doExclusive(func() { hasData = t.hasData })
 
 	select {
-	case <-stopSig:
+	case <-cancel:
 		return false
 	case <-hasData:
-		// if no data buffered but signal released
-		// usually error happened when reading in background
 		if t.Error() != nil {
+			// if no data buffered but signal released, usually error happened when reading in background
 			return t.hasDataInBuf()
 		}
 
@@ -330,10 +459,9 @@ func (t *TimeoutReader) WaitForData(stopSig <-chan struct{}) bool {
 	}
 }
 
-// Read performs a read operation with timeout option, function will return when
-// maxWait exceeded or p is full
+// Read performs a read operation with timeout option, will block until maxWait exceeded or p is full
+//
 // if the function returned because of timeout, the returned error is ErrDeadlineExceeded
-// for go1.15 and on, it's the same as os.ErrDeadlineExceeded
 func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shouldCopy bool, err error) {
 	var (
 		n           int
@@ -381,7 +509,7 @@ func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shou
 		p[0] = firstByte
 
 		if err != nil {
-			if !isDeadlineExceeded(err) {
+			if !IsDeadlineExceeded(err) {
 				// store unexpected error
 				t.err.Store(err)
 				// read failed, signal not able to set read deadline
@@ -397,9 +525,8 @@ func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shou
 	}
 
 	// take a snapshot for the size of buffered data
-	t.mu.RLock()
-	size := len(t.buf)
-	t.mu.RUnlock()
+	var size int
+	t.doExclusive(func() { size = len(t.buf) })
 
 	n = size
 	if n > maxReadSize {
@@ -408,18 +535,16 @@ func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shou
 
 		err = t.Error()
 
-		t.mu.Lock()
+		t.doExclusive(func() {
+			data = t.buf[:n]
+			t.buf = t.buf[n:]
 
-		data = t.buf[:n]
-		t.buf = t.buf[n:]
-
-		// handle has data check for WaitForData
-		if size == 0 && err == nil {
-			// no data buffered, need to wait for it next time
-			t.hasData = make(chan struct{})
-		}
-
-		t.mu.Unlock()
+			// handle has data check for WaitForData
+			if size == 0 && err == nil {
+				// no data buffered, need to wait for it next time
+				t.hasData = make(chan struct{})
+			}
+		})
 
 		return data, false, err
 	}
@@ -460,13 +585,10 @@ func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shou
 		isTimeout = true
 	}
 
-	// take a snapshot again for the size of buffered data
-	t.mu.RLock()
-	size = len(t.buf)
-	t.mu.RUnlock()
+	// take a snapshot for the size of buffered data again after timeout
+	t.doExclusive(func() { size = len(t.buf) })
 
 	err = t.Error()
-
 	if err == nil && isTimeout {
 		err = ErrDeadlineExceeded
 	}
@@ -482,18 +604,16 @@ func (t *TimeoutReader) Read(maxWait time.Duration, p []byte) (data []byte, shou
 		n = maxReadSize
 	}
 
-	t.mu.Lock()
+	t.doExclusive(func() {
+		data = t.buf[:n]
+		t.buf = t.buf[n:]
 
-	data = t.buf[:n]
-	t.buf = t.buf[n:]
-
-	// handle has data check for WaitForData
-	if len(t.buf) == 0 && err == ErrDeadlineExceeded {
-		// no data buffered, need to wait for it next time
-		t.hasData = make(chan struct{})
-	}
-
-	t.mu.Unlock()
+		// handle has data check for WaitForData
+		if len(t.buf) == 0 && err == ErrDeadlineExceeded {
+			// no data buffered, need to wait for it next time
+			t.hasData = make(chan struct{})
+		}
+	})
 
 	return data, false, err
 }

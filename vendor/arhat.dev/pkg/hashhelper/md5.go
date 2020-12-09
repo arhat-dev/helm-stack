@@ -1,3 +1,5 @@
+// +build !nohashhelper_md5
+
 /*
 Copyright 2020 The arhat.dev Authors.
 
@@ -14,10 +16,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package exechelper
+package hashhelper
 
-import "syscall"
+import (
+	"crypto/md5"
+)
 
-func getSysProcAttr(setsid bool) *syscall.SysProcAttr {
-	return &syscall.SysProcAttr{}
+func MD5Sum(data []byte) []byte {
+	h := md5.New()
+	_, _ = h.Write(data)
+	return h.Sum(nil)
 }

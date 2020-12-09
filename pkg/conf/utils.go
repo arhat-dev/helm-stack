@@ -2,6 +2,7 @@ package conf
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"strings"
 
 	"arhat.dev/pkg/hashhelper"
@@ -11,9 +12,10 @@ func generateRandomName(fallback string) string {
 	buf := make([]byte, 128)
 	n, err := rand.Read(buf)
 	if err != nil || n != 128 {
-		return hashhelper.Sha256SumHex([]byte(fallback))
+		return hex.EncodeToString(hashhelper.Sha256Sum([]byte(fallback)))
 	}
-	return hashhelper.Sha256SumHex(buf)
+
+	return hex.EncodeToString(hashhelper.Sha256Sum(buf))
 }
 
 func getChartRepoNameChartNameChartVersion(name string) (repoName, chartName, chartVersion string) {

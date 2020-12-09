@@ -3,7 +3,6 @@
 package pty
 
 import (
-	"os"
 	"syscall"
 	"unsafe"
 )
@@ -11,7 +10,7 @@ import (
 // InheritSize applies the terminal size of pty to tty. This should be run
 // in a signal handler for syscall.SIGWINCH to automatically resize the tty when
 // the pty receives a window size change notification.
-func InheritSize(pty, tty *os.File) error {
+func InheritSize(pty Pty, tty Tty) error {
 	size, err := GetsizeFull(pty)
 	if err != nil {
 		return err
@@ -24,12 +23,12 @@ func InheritSize(pty, tty *os.File) error {
 }
 
 // Setsize resizes t to s.
-func Setsize(t *os.File, ws *Winsize) error {
+func Setsize(t FdHolder, ws *Winsize) error {
 	return windowRectCall(ws, t.Fd(), syscall.TIOCSWINSZ)
 }
 
 // GetsizeFull returns the full terminal size description.
-func GetsizeFull(t *os.File) (size *Winsize, err error) {
+func GetsizeFull(t FdHolder) (size *Winsize, err error) {
 	var ws Winsize
 	err = windowRectCall(&ws, t.Fd(), syscall.TIOCGWINSZ)
 	return &ws, err
@@ -37,7 +36,7 @@ func GetsizeFull(t *os.File) (size *Winsize, err error) {
 
 // Getsize returns the number of rows (lines) and cols (positions
 // in each line) in terminal t.
-func Getsize(t *os.File) (rows, cols int, err error) {
+func Getsize(t FdHolder) (rows, cols int, err error) {
 	ws, err := GetsizeFull(t)
 	return int(ws.Rows), int(ws.Cols), err
 }

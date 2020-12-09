@@ -1,3 +1,5 @@
+// +build !darwin,!freebsd,!dragonfly,!linux,!openbsd,!solaris
+
 /*
 Copyright 2020 The arhat.dev Authors.
 
@@ -14,29 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package hashhelper
+package exechelper
 
 import (
-	"crypto/md5"
-	"crypto/sha256"
-	"crypto/sha512"
-	"encoding/hex"
+	"syscall"
 )
 
-func Sha256SumHex(data []byte) string {
-	h := sha256.New()
-	_, _ = h.Write(data)
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func Sha512SumHex(data []byte) string {
-	h := sha512.New()
-	_, _ = h.Write(data)
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func MD5SumHex(data []byte) string {
-	h := md5.New()
-	_, _ = h.Write(data)
-	return hex.EncodeToString(h.Sum(nil))
+func getSysProcAttr(tty bool, origin *syscall.SysProcAttr) *syscall.SysProcAttr {
+	return origin
 }

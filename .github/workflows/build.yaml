@@ -49,9 +49,9 @@ jobs:
         # make -j$(nproc --all) helm-stack.aix.ppc64 TAGS=''
         # make -j$(nproc --all) helm-stack.dragonfly.amd64 TAGS=''
 
-    - name: Package
-      run: |
-        make package.helm-stack.linux.all
+    # - name: Package
+    #   run: |
+    #     make package.helm-stack.linux.all
 
     - name: Hash
       run: |
@@ -147,7 +147,6 @@ jobs:
     - build-on-linux
     - build-on-windows
     - build-on-darwin
-    # - build-on-linux-cgo
 
     runs-on: ubuntu-latest
     steps:
@@ -168,12 +167,6 @@ jobs:
       with:
         name: build-on-darwin
         path: build
-
-    # - name: Download linux cgo builds
-    #   uses: actions/download-artifact@v2
-    #   with:
-    #     name: build-on-linux-cgo
-    #     path: build
 
     - name: Extract tag name
       id: extract_tag
@@ -692,186 +685,116 @@ jobs:
         asset_path: build/helm-stack.netbsd.arm64
         asset_content_type: application/octet-stream
 
-    # - name: Upload helm-stack.plan9.x86
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.plan9.x86
-    #     asset_path: build/helm-stack.plan9.x86
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.plan9.amd64
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.plan9.amd64
-    #     asset_path: build/helm-stack.plan9.amd64
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.plan9.armv5
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.plan9.armv5
-    #     asset_path: build/helm-stack.plan9.armv5
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.plan9.armv6
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.plan9.armv6
-    #     asset_path: build/helm-stack.plan9.armv6
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.plan9.armv7
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.plan9.armv7
-    #     asset_path: build/helm-stack.plan9.armv7
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.dragonfly.amd64
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.dragonfly.amd64
-    #     asset_path: build/helm-stack.dragonfly.amd64
-    #     asset_content_type: application/octet-stream
-
-    # - name: Upload helm-stack.solaris.amd64
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.solaris.amd64
-    #     asset_path: build/helm-stack.solaris.amd64
-    #     asset_content_type: application/octet-stream
-
     #
     # packages
     #
 
-    - name: Upload helm-stack-amd64.deb
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.amd64.deb
-        asset_path: build/helm-stack.amd64.deb
-        asset_content_type: application/vnd.debian.binary-package
-
-    - name: Upload helm-stack-x86_64.rpm
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.x86_64.rpm
-        asset_path: build/helm-stack.x86_64.rpm
-        asset_content_type: application/x-rpm
-
-    - name: Upload helm-stack-armel.deb
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.armel.deb
-        asset_path: build/helm-stack.armel.deb
-        asset_content_type: application/vnd.debian.binary-package
-
-    - name: Upload helm-stack-armhf.deb
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.armhf.deb
-        asset_path: build/helm-stack.armhf.deb
-        asset_content_type: application/vnd.debian.binary-package
-
-    - name: Upload helm-stack-armhfp.rpm
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.armhfp.rpm
-        asset_path: build/helm-stack.armhfp.rpm
-        asset_content_type: application/x-rpm
-
-    - name: Upload helm-stack-arm64.deb
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.arm64.deb
-        asset_path: build/helm-stack.arm64.deb
-        asset_content_type: application/vnd.debian.binary-package
-
-    - name: Upload helm-stack-aarch64.rpm
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_name: helm-stack.aarch64.rpm
-        asset_path: build/helm-stack.aarch64.rpm
-        asset_content_type: application/x-rpm
-
-    # - name: Upload helm-stack-arm64.msi
+    # - name: Upload helm-stack-amd64.deb
     #   uses: actions/upload-release-asset@v1
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #   with:
     #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.arm64.msi
-    #     asset_path: build/helm-stack.arm64.msi
-    #     asset_content_type: application/x-msdownload
+    #     asset_name: helm-stack.amd64.deb
+    #     asset_path: build/helm-stack.amd64.deb
+    #     asset_content_type: application/vnd.debian.binary-package
 
-    # - name: Upload helm-stack-amd64.msi
+    # - name: Upload helm-stack-x86_64.rpm
     #   uses: actions/upload-release-asset@v1
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #   with:
     #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.amd64.msi
-    #     asset_path: build/helm-stack.amd64.msi
-    #     asset_content_type: application/x-msdownload
+    #     asset_name: helm-stack.x86_64.rpm
+    #     asset_path: build/helm-stack.x86_64.rpm
+    #     asset_content_type: application/x-rpm
 
-    # - name: Upload helm-stack-arm64.pkg
+    # - name: Upload helm-stack-armel.deb
     #   uses: actions/upload-release-asset@v1
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #   with:
     #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.arm64.pkg
-    #     asset_path: build/helm-stack.arm64.pkg
-    #     asset_content_type: application/octet-stream
+    #     asset_name: helm-stack.armel.deb
+    #     asset_path: build/helm-stack.armel.deb
+    #     asset_content_type: application/vnd.debian.binary-package
 
-    # - name: Upload helm-stack-amd64.pkg
+    # - name: Upload helm-stack-armhf.deb
     #   uses: actions/upload-release-asset@v1
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #   with:
     #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_name: helm-stack.amd64.pkg
-    #     asset_path: build/helm-stack.amd64.pkg
-    #     asset_content_type: application/octet-stream
+    #     asset_name: helm-stack.armhf.deb
+    #     asset_path: build/helm-stack.armhf.deb
+    #     asset_content_type: application/vnd.debian.binary-package
+
+    # - name: Upload helm-stack-armhfp.rpm
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_name: helm-stack.armhfp.rpm
+    #     asset_path: build/helm-stack.armhfp.rpm
+    #     asset_content_type: application/x-rpm
+
+    # - name: Upload helm-stack-arm64.deb
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_name: helm-stack.arm64.deb
+    #     asset_path: build/helm-stack.arm64.deb
+    #     asset_content_type: application/vnd.debian.binary-package
+
+    # - name: Upload helm-stack-aarch64.rpm
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_name: helm-stack.aarch64.rpm
+    #     asset_path: build/helm-stack.aarch64.rpm
+    #     asset_content_type: application/x-rpm
+
+    # # - name: Upload helm-stack-arm64.msi
+    # #   uses: actions/upload-release-asset@v1
+    # #   env:
+    # #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # #   with:
+    # #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    # #     asset_name: helm-stack.arm64.msi
+    # #     asset_path: build/helm-stack.arm64.msi
+    # #     asset_content_type: application/x-msdownload
+
+    # # - name: Upload helm-stack-amd64.msi
+    # #   uses: actions/upload-release-asset@v1
+    # #   env:
+    # #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # #   with:
+    # #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    # #     asset_name: helm-stack.amd64.msi
+    # #     asset_path: build/helm-stack.amd64.msi
+    # #     asset_content_type: application/x-msdownload
+
+    # # - name: Upload helm-stack-arm64.pkg
+    # #   uses: actions/upload-release-asset@v1
+    # #   env:
+    # #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # #   with:
+    # #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    # #     asset_name: helm-stack.arm64.pkg
+    # #     asset_path: build/helm-stack.arm64.pkg
+    # #     asset_content_type: application/octet-stream
+
+    # # - name: Upload helm-stack-amd64.pkg
+    # #   uses: actions/upload-release-asset@v1
+    # #   env:
+    # #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # #   with:
+    # #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    # #     asset_name: helm-stack.amd64.pkg
+    # #     asset_path: build/helm-stack.amd64.pkg
+    # #     asset_content_type: application/octet-stream

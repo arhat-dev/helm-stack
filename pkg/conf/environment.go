@@ -372,6 +372,9 @@ func (e Environment) Apply(ctx context.Context, dryRunArg, envDir string, charts
 			fallthrough
 		case s.Present && s.CRDPresent:
 			action = []string{"apply"}
+			if s.DisableValidation {
+				action = append(action, "--validate", "false")
+			}
 		case !s.Present && !s.CRDPresent:
 			// TODO: filter out crd
 			fallthrough
@@ -541,6 +544,8 @@ func (c DeploymentSpec) GetState() DeploymentState {
 			ret.CRDPresent = true
 		case "nocrds":
 			ret.CRDPresent = false
+		case "novalidation":
+			ret.DisableValidation = true
 		default:
 			if ret.UnknownStates == "" {
 				ret.UnknownStates = s
@@ -556,6 +561,9 @@ func (c DeploymentSpec) GetState() DeploymentState {
 type DeploymentState struct {
 	Present    bool
 	CRDPresent bool
+
+	// set --validate=false to kubectl
+	DisableValidation bool
 
 	UnknownStates string
 }

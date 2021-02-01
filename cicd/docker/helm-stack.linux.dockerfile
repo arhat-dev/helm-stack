@@ -24,11 +24,11 @@ RUN KUBE_ARCH="$(basename ${ARCH} v7)"; if [ "${KUBE_ARCH}" = "x86" ]; then KUBE
 RUN KUBE_ARCH="$(basename ${ARCH} v7)"; if [ "${KUBE_ARCH}" = "x86" ]; then KUBE_ARCH="386"; fi ;\
     export KUBE_ARCH ;\
     mkdir -p /tmp/helm /opt/helm/v2 &&\
-    curl -SsL "https://get.helm.sh/helm-v2.16.12-linux-${KUBE_ARCH}.tar.gz" | tar -C /tmp/helm -zxf - &&\
+    curl -SsL "https://get.helm.sh/helm-v2.17.0-linux-${KUBE_ARCH}.tar.gz" | tar -C /tmp/helm -zxf - &&\
     mv "/tmp/helm/linux-${KUBE_ARCH}/helm" /opt/helm/v2/helm &&\
     rm -rf /tmp/helm &&\
     mkdir -p /tmp/helm /opt/helm/v3 &&\
-    curl -SsL "https://get.helm.sh/helm-v3.3.4-linux-${KUBE_ARCH}.tar.gz" | tar -C /tmp/helm -zxf - &&\
+    curl -SsL "https://get.helm.sh/helm-v3.5.1-linux-${KUBE_ARCH}.tar.gz" | tar -C /tmp/helm -zxf - &&\
     mv "/tmp/helm/linux-${KUBE_ARCH}/helm" /opt/helm/v3/helm &&\
     rm -rf /tmp/helm
 
